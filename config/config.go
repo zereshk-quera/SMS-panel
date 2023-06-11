@@ -27,9 +27,8 @@ type (
 
 	// PG -.
 	PG struct {
-		DSN	string `env:"PG_DSN"`
+		DSN string `env:"PG_DSN"`
 	}
-
 )
 
 // NewConfig returns app config.
