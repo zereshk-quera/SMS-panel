@@ -27,7 +27,13 @@ type (
 
 	// PG -.
 	PG struct {
-		DSN string `env:"PG_DSN"`
+		HOST     string `env:"POSTGRES_HOST"`
+		PORT     string `env:"POSTGRES_PORT"`
+		DB       string `env:"POSTGRES_DB"`
+		USER     string `env:"POSTGRES_USER"`
+		PASSWORD string `env:"POSTGRES_PASSWORD"`
+		SSLMODE  string `env:"POSTGRES_SSLMODE"`
+		TIMEZONE string `env:"POSTGRES_TIMEZONE"`
 	}
 )
 
