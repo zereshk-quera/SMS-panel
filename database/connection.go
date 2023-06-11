@@ -1,6 +1,7 @@
 package db
 
 import (
+	"SMS-panel/config"
 	"errors"
 
 	"gorm.io/driver/postgres"
@@ -9,8 +10,8 @@ import (
 
 var dbConn *gorm.DB
 
-func Connect() error {
-	dsn := "host=your_host port=your_port user=your_user password=your_password dbname=your_database sslmode=disable"
+func Connect(cfg *config.Config) error {
+	dsn := cfg.PG.DSN
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
