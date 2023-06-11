@@ -22,6 +22,8 @@ services:
   app:
     build: .
     container_name: sms-panel
+    ports:
+      - 8080:8080
     volumes:
       - .:/app
     env_file:
