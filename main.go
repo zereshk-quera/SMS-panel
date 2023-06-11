@@ -6,17 +6,28 @@ import (
 	echo "github.com/labstack/echo/v4"
 )
 
+import (
+	"SMS-panel/handlers"
+
+	_ "SMS-panel/docs"
+
+	echo "github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
+)
+
+//	@Title			SMS-PANEL
+//	@version		1.0
+//	@description	Quera SMS-PANEL server
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host						localhost:8080
+// @BasePath					/
+// @query.collection.format	multi
 func main() {
-	// Create a new Echo instance
-	e := echo.New()
-
-	// Register routes
-	e.POST("/phone-books/phone-book-numbers", handlers.CreatePhoneBookNumber)
-	e.GET("/phone-books/:phoneBookID/phone-book-numbers", handlers.ListPhoneBookNumbers)
-	e.GET("/phone-books/phone-book-numbers/:phoneBookNumberID", handlers.ReadPhoneBookNumber)
-	e.PUT("/phone-books/phone-book-numbers/:phoneBookNumberID", handlers.UpdatePhoneBookNumber)
-	e.DELETE("/phone-books/phone-book-numbers/:phoneBookNumberID", handlers.DeletePhoneBookNumber)
-
-	// Start the server
-	e.Start(":8080")
 }
