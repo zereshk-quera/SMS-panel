@@ -32,3 +32,6 @@ like this migrate -path database/migrations -database "<database_connection_stri
 
 That's it! With these instructions, you can create new migrations and apply them to your database, as well as roll back migrations if needed.
 
+## Swagger
+start using swagger [echo-swagger man page](https://github.com/swaggo/echo-swagger)
+
