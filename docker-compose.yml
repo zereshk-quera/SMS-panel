@@ -31,8 +31,7 @@ services:
     command: >
       sh -c "
         migrate -path database/migrations -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSLMODE}" up;
-        go build -o /sms_panel;
-        /sms_panel
+        go run main.go;
       "
     depends_on:
       db:
