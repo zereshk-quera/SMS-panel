@@ -1,4 +1,4 @@
-CREATE TABLE budget (
+CREATE TABLE IF NOT EXISTS budget (
     id SERIAL PRIMARY KEY,
     account_id INT NOT NULL,
     amount BIGINT,
