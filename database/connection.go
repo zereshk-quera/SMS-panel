@@ -1,8 +1,8 @@
 package db
 
 import (
-	"SMS-panel/config"
 	"errors"
+	"fmt"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -10,8 +10,15 @@ import (
 
 var dbConn *gorm.DB
 
-func Connect(cfg *config.Config) error {
-	dsn := cfg.PG.DSN
+func Connect() error {
+	// -------env----------
+	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
+	// 	cfg.PG.HOST, cfg.PG.USER, cfg.PG.PASSWORD, cfg.PG.DB, cfg.PG.PORT, cfg.PG.SSLMODE, cfg.PG.TIMEZONE)
+	// -------env----------
+
+	// If not connect - use "db" instead of "localhost"
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
+		"localhost", "root", "password", "test", "5432", "disable", "Asia/Tehran")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
@@ -23,7 +30,10 @@ func Connect(cfg *config.Config) error {
 
 func GetConnection() (*gorm.DB, error) {
 	if dbConn == nil {
-		return nil, errors.New("database connection is not initialized")
+		err := Connect()
+		if err != nil {
+			return nil, errors.New("database connection is not initialized")
+		}
 	}
 	return dbConn, nil
 }
