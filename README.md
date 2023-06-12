@@ -32,6 +32,27 @@ like this migrate -path database/migrations -database "<database_connection_stri
 
 That's it! With these instructions, you can create new migrations and apply them to your database, as well as roll back migrations if needed.
 
-## Swagger
-start using swagger [echo-swagger man page](https://github.com/swaggo/echo-swagger)
+Swagger Documentation
 
+Updating Swagger Documentation
+To update the Swagger documentation for the API, follow these steps:
+
+Make the necessary changes to your API endpoints and their annotations in your code.
+
+Open a terminal and navigate to the package where your handlers are located.
+
+Run the swag init command to regenerate the Swagger JSON file:
+
+swag init
+This command scans your Go files and updates the Swagger JSON file based on the annotations in your code. Make sure you have the swag tool installed and available in your system's PATH.
+
+After running the swag init command, the Swagger JSON file will be updated with your latest code changes.
+
+Accessing Swagger Documentation
+To access the Swagger documentation and interact with the API, follow these steps:
+
+Build and run your application.
+
+Open a web browser and navigate to the Swagger UI URL. The default URL is typically http://localhost:8080/swagger/index.html.
+
+The Swagger UI provides a user-friendly interface to explore the API endpoints, view request/response details, and even test the API by sending requests directly from the Swagger UI.

@@ -1,8 +1,6 @@
 package db
 
 import (
-	"errors"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -10,7 +8,7 @@ import (
 var dbConn *gorm.DB
 
 func Connect() error {
-	dsn := "host=your_host port=your_port user=your_user password=your_password dbname=your_database sslmode=disable"
+	dsn := "host=localhost port=5433 user=amirhejazi password=postgres dbname=sms_panel sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
@@ -22,7 +20,10 @@ func Connect() error {
 
 func GetConnection() (*gorm.DB, error) {
 	if dbConn == nil {
-		return nil, errors.New("database connection is not initialized")
+		err := Connect()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return dbConn, nil
 }
