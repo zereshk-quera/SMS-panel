@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 var e *echo.Echo
@@ -13,6 +14,9 @@ func init() {
 }
 
 func StartServer() {
+	// Swagger
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	accountRoutes(e)
 	log.Fatal(e.Start(":8080"))
 }
