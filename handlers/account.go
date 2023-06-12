@@ -6,6 +6,7 @@ import (
 	"SMS-panel/utils"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -14,14 +15,36 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var SECRET = "s89ut8cn4u3bghyn75gy38ghm9g3mgc85g9m" ///should be in env file !!!!!!!!!!
-
 func RegisterHandler(c echo.Context) error {
+
 	//Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
+	}
+
+	//check json format
+	if _, ok := jsonBody["firstname"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include firstname"})
+	}
+	if _, ok := jsonBody["lastname"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include lastname"})
+	}
+	if _, ok := jsonBody["email"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include email"})
+	}
+	if _, ok := jsonBody["phone"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include phone"})
+	}
+	if _, ok := jsonBody["nationalid"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include nationalid"})
+	}
+	if _, ok := jsonBody["username"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include username"})
+	}
+	if _, ok := jsonBody["password"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include password"})
 	}
 
 	//Create User Object
@@ -76,8 +99,8 @@ func RegisterHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Email Address has already been registered"})
 	}
 
-	//Is Input Email Address Unique or Not
-	db.Where("nationalid = ?", user.Email).First(&existingUser)
+	//Is Input National ID Unique or Not
+	db.Where("national_id = ?", user.NationalID).First(&existingUser)
 	if existingUser.ID != 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt National ID has already been registered"})
 	}
@@ -85,7 +108,7 @@ func RegisterHandler(c echo.Context) error {
 	//Is Input Username Unique or Not
 	var existingAccount models.Account
 	db.Where("username = ?", jsonBody["username"].(string)).First(&existingAccount)
-	if existingUser.ID != 0 {
+	if existingAccount.ID != 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Username has already been registered"})
 	}
 
@@ -94,11 +117,10 @@ func RegisterHandler(c echo.Context) error {
 	if createdUser.Error != nil {
 		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "User Cration Failed"})
 	}
-	userID := user.ID
 
-	//instantiating Account Object
+	//Instantiating Account Object
 	var account models.Account
-	account.UserID = userID
+	account.UserID = user.ID
 	account.Username = jsonBody["username"].(string)
 	account.Budget = 0
 
@@ -109,26 +131,31 @@ func RegisterHandler(c echo.Context) error {
 
 	account.Password = string(hash)
 
+	//Generate Token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  account.ID,
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
-	tokenString, err := token.SignedString([]byte(SECRET))
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "Failed To Create Token"})
 	}
-	account.Password = tokenString
+	account.Token = tokenString
 
 	//Insert Account Object Into Database
 	createdAccount := db.Create(&account)
 	if createdAccount.Error != nil {
-		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "Account Cration Failed"})
+		return c.JSON(http.StatusInternalServerError, account)
 	}
 
-	cookie := new(http.Cookie)
-	cookie.Name = "token"
-	cookie.Value = account.Token
-	cookie.Expires = time.Now().Add(time.Hour)
+	//Create Cookie
+	cookie := &http.Cookie{
+		Name:     "account_token",
+		Value:    account.Token,
+		Path:     "/",
+		MaxAge:   3600,
+		HttpOnly: true,
+	}
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, account)
@@ -142,6 +169,15 @@ func LoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
+	//Check json format
+	if _, ok := jsonBody["username"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include username"})
+	}
+	if _, ok := jsonBody["password"]; !ok {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include password"})
+	}
+
+	//Find account based on input username
 	username := jsonBody["username"].(string)
 	var account models.Account
 	db, err := database.GetConnection()
@@ -159,34 +195,56 @@ func LoginHandler(c echo.Context) error {
 	}
 
 	//Generate Token
-	var user models.User
-	db.Where("id = ?", account.UserID).First(&user)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  account.ID,
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
-	tokenString, err := token.SignedString([]byte(SECRET))
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "Failed To Create Token"})
 	}
-	account.Token = tokenString
 
-	cookie := new(http.Cookie)
-	cookie.Name = "token"
-	cookie.Value = account.Token
-	cookie.Expires = time.Now().Add(time.Hour)
-	c.SetCookie(cookie)
+	//Update Account's Token In Database
+	account.Token = tokenString
+	db.Save(&account)
+
+	//Check for Cookie Existence
+	hasCookie := false
+	cookies := c.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == "account_token" {
+			hasCookie = true
+			break
+		}
+	}
+
+	//Create Cookie
+	if !hasCookie {
+		cookie := &http.Cookie{
+			Name:     "account_token",
+			Value:    account.Token,
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: true,
+		}
+		c.SetCookie(cookie)
+	}
 
 	return c.JSON(http.StatusOK, account)
 }
 
 func BudgetAmountHandler(c echo.Context) error {
+	//Recieve Account Object
 	account := c.Get("account")
-	budget := account.(models.Account).Budget
+
+	account = account.(models.Account)
+	budget := int(account.(models.Account).Budget)
+
+	//Create Result Object
 	res := struct {
-		amount int
+		Amount int `json:"amount"`
 	}{
-		amount: int(budget),
+		Amount: budget,
 	}
 	return c.JSON(http.StatusOK, res)
 }
