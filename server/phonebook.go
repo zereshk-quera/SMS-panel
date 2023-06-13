@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func accountRoutes(e *echo.Echo) {
+func phonebookRoutes(e *echo.Echo) {
 
 	// Register routes
 	e.POST("/account/phone-books/", handlers.CreatePhoneBook)
