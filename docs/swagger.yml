@@ -1,0 +1,398 @@
+basePath: /
+definitions:
+  handlers.CreatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.PhoneBookRequest:
+    properties:
+      accountID:
+        type: integer
+      name:
+        type: string
+    required:
+    - accountID
+    - name
+    type: object
+  handlers.PhoneBookResponse:
+    properties:
+      accountID:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handlers.UpdatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      prefix:
+        type: string
+    type: object
+  models.PhoneBookNumber:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Quera SMS-PANEL server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: SMS-PANEL
+  version: "1.0"
+paths:
+  /account/{accountID}/phone-books/:
+    get:
+      consumes:
+      - application/json
+      description: Get all phone books for a given account ID
+      parameters:
+      - description: Account ID
+        in: path
+        name: accountID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PhoneBookResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get all phone books
+      tags:
+      - phonebook
+  /account/{accountID}/phone-books/{phoneBookID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a phone book by ID for a given account ID
+      parameters:
+      - description: Account ID
+        in: path
+        name: accountID
+        required: true
+        type: integer
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a phone book
+      tags:
+      - phonebook
+    get:
+      consumes:
+      - application/json
+      description: Get a phone book by ID for a given account ID
+      parameters:
+      - description: Account ID
+        in: path
+        name: accountID
+        required: true
+        type: integer
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get a phone book
+      tags:
+      - phonebook
+    put:
+      consumes:
+      - application/json
+      description: Update a phone book by ID for a given account ID
+      parameters:
+      - description: Account ID
+        in: path
+        name: accountID
+        required: true
+        type: integer
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      - description: Phone Book object
+        in: body
+        name: phoneBook
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PhoneBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update a phone book
+      tags:
+      - phonebook
+  /account/phone-books/{phoneBookID}/phone-book-numbers:
+    get:
+      consumes:
+      - application/json
+      description: Get all phone book numbers for a given PhoneBookID
+      parameters:
+      - description: Phone book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.PhoneBookNumber'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all phone book numbers for a given PhoneBookID
+      tags:
+      - PhoneBookNumbers
+  /account/phone-books/phone-book-numbers:
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book number
+      parameters:
+      - description: Phone book number object
+        in: body
+        name: phoneBookNumber
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePhoneBookNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new phone book number
+      tags:
+      - PhoneBookNumbers
+  /account/phone-books/phone-book-numbers/{phoneBookNumberID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete phone book number
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete phone book number
+      tags:
+      - PhoneBookNumbers
+    get:
+      consumes:
+      - application/json
+      description: Get phone book number by ID
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get phone book number by ID
+      tags:
+      - PhoneBookNumbers
+    put:
+      consumes:
+      - application/json
+      description: Update phone book number
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      - description: Phone book number object
+        in: body
+        name: phoneBookNumber
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePhoneBookNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update phone book number
+      tags:
+      - PhoneBookNumbers
+  /phonebook:
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book entry
+      parameters:
+      - description: Phone book entry data
+        in: body
+        name: phoneBook
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PhoneBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a phone book entry
+      tags:
+      - phonebook
+schemes:
+- http
+swagger: "2.0"
