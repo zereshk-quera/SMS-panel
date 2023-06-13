@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   handlers.AccountResponse:
     properties:
@@ -70,6 +71,18 @@ definitions:
       name:
         type: string
     type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Simple SMS-PANEL server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: SMS-PANEL
+  version: "1.0"
   handlers.UpdatePhoneBookNumberRequest:
     properties:
       name:

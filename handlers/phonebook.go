@@ -141,7 +141,9 @@ func UpdatePhoneBook(c echo.Context) error {
 	}
 
 	var phoneBook models.PhoneBook
+
 	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phonebook not found")
@@ -183,6 +185,7 @@ func DeletePhoneBook(c echo.Context) error {
 
 	var phoneBook models.PhoneBook
 	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phone book not found")
