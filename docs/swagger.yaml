@@ -1,5 +1,26 @@
-basePath: /
 definitions:
+  handlers.AccountResponse:
+    properties:
+      Budget:
+        type: integer
+      ID:
+        type: integer
+      IsActive:
+        type: boolean
+      Password:
+        type: string
+      Token:
+        type: string
+      UserID:
+        type: integer
+      Username:
+        type: string
+    type: object
+  handlers.BudgetAmountResponse:
+    properties:
+      amount:
+        type: integer
+    type: object
   handlers.CreatePhoneBookNumberRequest:
     properties:
       name:
@@ -14,6 +35,20 @@ definitions:
   handlers.ErrorResponse:
     properties:
       message:
+        type: string
+    type: object
+  handlers.ErrorResponseRegisterLogin:
+    properties:
+      message:
+        type: string
+      responsecode:
+        type: integer
+    type: object
+  handlers.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
         type: string
     type: object
   handlers.PhoneBookRequest:
@@ -44,6 +79,23 @@ definitions:
       prefix:
         type: string
     type: object
+  handlers.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      nationalid:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
   models.PhoneBookNumber:
     properties:
       id:
@@ -57,18 +109,8 @@ definitions:
       prefix:
         type: string
     type: object
-host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Quera SMS-PANEL server
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: SMS-PANEL
-  version: "1.0"
+  contact: {}
 paths:
   /account/{accountID}/phone-books/:
     get:
@@ -363,6 +405,89 @@ paths:
       summary: Update phone book number
       tags:
       - PhoneBookNumbers
+  /accounts/budget:
+    get:
+      description: Get the budget amount for the logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.BudgetAmountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get budget amount
+      tags:
+      - users
+  /accounts/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with username and password
+      parameters:
+      - description: Login request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: User login
+      tags:
+      - users
+  /accounts/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided information
+      parameters:
+      - description: User registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Register a new user
+      tags:
+      - users
   /phonebook:
     post:
       consumes:
@@ -393,6 +518,4 @@ paths:
       summary: Create a phone book entry
       tags:
       - phonebook
-schemes:
-- http
 swagger: "2.0"

@@ -14,5 +14,6 @@ func init() {
 
 func StartServer() {
 	accountRoutes(e)
+	phonebookRoutes(e)
 	log.Fatal(e.Start(":8080"))
 }
