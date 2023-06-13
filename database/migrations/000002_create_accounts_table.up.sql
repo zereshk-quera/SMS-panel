@@ -4,5 +4,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     username VARCHAR(255) NOT NULL UNIQUE,
     budget BIGINT,
     password VARCHAR(255),
+    token VARCHAR(1020),
+    is_active boolean,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

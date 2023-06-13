@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"os"
+
 	database "SMS-panel/database"
 	"SMS-panel/models"
-
 	"fmt"
 	"time"
 
@@ -11,43 +12,57 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var SECRET = "s89ut8cn4u3bghyn75gy38ghm9g3mgc85g9m" ///should be in env file !!!!!!!!!!
-
 func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		//get cookie
-		tokenString, err := c.Cookie("username")
-		if err != nil {
+		//Get Cookie
+		cookies := c.Cookies()
+		tokenString := ""
+		for _, cookie := range cookies {
+			if cookie.Name == "account_token" {
+				tokenString = cookie.Value
+				break
+			}
+		}
+
+		//Account Doesn't have Token
+		if tokenString == "" {
 			return echo.ErrUnauthorized
 		}
 
-		//parse token
-		token, err := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
+		//Parse Token
+		token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 
-			//wrong algorithm
+			//Wrong Algorithm
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected Sigining Method %v", token.Header["alg"])
 			}
-			return []byte(SECRET), nil
+			return []byte(os.Getenv("SECRET")), nil
 
 		})
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 
-			//check expiration date
+			//Check Expiration Time
 			if float64(time.Now().Unix()) > claims["exp"].(float64) {
 				return echo.ErrUnauthorized
 			}
 
-			db, _ := database.GetConnection()
+			//Connect To Database
+			db, err := database.GetConnection()
+			if err != nil {
+				return echo.ErrInternalServerError
+			}
 
-			//find account
+			//Find Account
 			var account models.Account
-			accountID := claims["id"].(int)
-			db.First(&account, accountID)
+			db.First(&account, claims["id"])
+
+			//Token And Id are not For Same Accounts
 			if account.ID == 0 {
 				return echo.ErrUnauthorized
 			}
+
+			//Add Account Object To Context
 			c.Set("account", account)
 			return next(c)
 

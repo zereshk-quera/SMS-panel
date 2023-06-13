@@ -18,5 +18,6 @@ func StartServer() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	accountRoutes(e)
+	phonebookRoutes(e)
 	log.Fatal(e.Start(":8080"))
 }

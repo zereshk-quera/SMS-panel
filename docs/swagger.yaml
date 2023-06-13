@@ -1,8 +1,55 @@
 basePath: /
 definitions:
+  handlers.AccountResponse:
+    properties:
+      Budget:
+        type: integer
+      ID:
+        type: integer
+      IsActive:
+        type: boolean
+      Password:
+        type: string
+      Token:
+        type: string
+      UserID:
+        type: integer
+      Username:
+        type: string
+    type: object
+  handlers.BudgetAmountResponse:
+    properties:
+      amount:
+        type: integer
+    type: object
+  handlers.CreatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+    type: object
   handlers.ErrorResponse:
     properties:
       message:
+        type: string
+    type: object
+  handlers.ErrorResponseRegisterLogin:
+    properties:
+      message:
+        type: string
+      responsecode:
+        type: integer
+    type: object
+  handlers.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
         type: string
     type: object
   handlers.PhoneBookRequest:
@@ -36,6 +83,47 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: SMS-PANEL
   version: "1.0"
+  handlers.UpdatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      prefix:
+        type: string
+    type: object
+  handlers.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      nationalid:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  models.PhoneBookNumber:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+    type: object
+info:
+  contact: {}
 paths:
   /account/{accountID}/phone-books/:
     get:
@@ -174,6 +262,245 @@ paths:
       summary: Update a phone book
       tags:
       - phonebook
+  /account/phone-books/{phoneBookID}/phone-book-numbers:
+    get:
+      consumes:
+      - application/json
+      description: Get all phone book numbers for a given PhoneBookID
+      parameters:
+      - description: Phone book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.PhoneBookNumber'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all phone book numbers for a given PhoneBookID
+      tags:
+      - PhoneBookNumbers
+  /account/phone-books/phone-book-numbers:
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book number
+      parameters:
+      - description: Phone book number object
+        in: body
+        name: phoneBookNumber
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePhoneBookNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new phone book number
+      tags:
+      - PhoneBookNumbers
+  /account/phone-books/phone-book-numbers/{phoneBookNumberID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete phone book number
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete phone book number
+      tags:
+      - PhoneBookNumbers
+    get:
+      consumes:
+      - application/json
+      description: Get phone book number by ID
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get phone book number by ID
+      tags:
+      - PhoneBookNumbers
+    put:
+      consumes:
+      - application/json
+      description: Update phone book number
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      - description: Phone book number object
+        in: body
+        name: phoneBookNumber
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePhoneBookNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update phone book number
+      tags:
+      - PhoneBookNumbers
+  /accounts/budget:
+    get:
+      description: Get the budget amount for the logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.BudgetAmountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get budget amount
+      tags:
+      - users
+  /accounts/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with username and password
+      parameters:
+      - description: Login request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: User login
+      tags:
+      - users
+  /accounts/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided information
+      parameters:
+      - description: User registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Register a new user
+      tags:
+      - users
   /phonebook:
     post:
       consumes:

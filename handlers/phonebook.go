@@ -77,7 +77,7 @@ func GetAllPhoneBooks(c echo.Context) error {
 
 	var phoneBooks []models.PhoneBook
 	// Get all matched records
-	result := db.Where("accountID = ?", accountID).Find(&phoneBooks)
+	result := db.Where("account_id = ?", accountID).Find(&phoneBooks)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -107,7 +107,7 @@ func ReadPhoneBook(c echo.Context) error {
 
 	var phoneBook models.PhoneBook
 	// Find the phone book with matching phoneBookID and accountID
-	result := db.Where("id = ? AND AccountID = ?", phoneBookID, accountID).First(&phoneBook)
+	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phonebook not found")
@@ -141,7 +141,9 @@ func UpdatePhoneBook(c echo.Context) error {
 	}
 
 	var phoneBook models.PhoneBook
-	result := db.Where("id = ? AND AccountID = ?", phoneBookID, accountID).First(&phoneBook)
+
+	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phonebook not found")
@@ -182,7 +184,8 @@ func DeletePhoneBook(c echo.Context) error {
 	}
 
 	var phoneBook models.PhoneBook
-	result := db.Where("id = ? AND AccountID = ?", phoneBookID, accountID).First(&phoneBook)
+	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phone book not found")
