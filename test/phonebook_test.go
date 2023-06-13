@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,12 +17,26 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 var (
-	account     models.Account
-	phoneBookID uint
+	account          models.Account
+	phoneBookID      uint
+	e                *echo.Echo
+	db               *gorm.DB
+	phonebookHandler *handlers.PhonebookHandler
 )
+
+func init() {
+	e = echo.New()
+	db, err := database.GetConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	phonebookHandler = handlers.NewPhonebookHandler(db)
+}
 
 func TestMain(m *testing.M) {
 	err := database.Connect()
@@ -40,12 +55,12 @@ func TestMain(m *testing.M) {
 		panic("failed to create test data: " + err.Error())
 	}
 
-	code := m.Run()
-
 	err = cleanupTestData()
 	if err != nil {
 		panic("failed to cleanup test data: " + err.Error())
 	}
+
+	code := m.Run()
 
 	os.Exit(code)
 }
@@ -116,8 +131,6 @@ func cleanupTestData() error {
 }
 
 func TestCreatePhoneBook(t *testing.T) {
-	e := echo.New()
-
 	t.Run("Success", func(t *testing.T) {
 		phoneBookReq := handlers.PhoneBookRequest{
 			AccountID: account.ID,
@@ -132,7 +145,7 @@ func TestCreatePhoneBook(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err = handlers.CreatePhoneBook(c)
+		err = phonebookHandler.CreatePhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusCreated, rec.Code)
@@ -158,7 +171,7 @@ func TestCreatePhoneBook(t *testing.T) {
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		err = handlers.CreatePhoneBook(c)
+		err = phonebookHandler.CreatePhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -172,8 +185,6 @@ func TestCreatePhoneBook(t *testing.T) {
 }
 
 func TestGetAllPhoneBooks(t *testing.T) {
-	e := echo.New()
-
 	t.Run("Success", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/phonebooks/"+fmt.Sprint(account.ID), nil)
 		rec := httptest.NewRecorder()
@@ -181,7 +192,7 @@ func TestGetAllPhoneBooks(t *testing.T) {
 		c.SetParamNames("accountID")
 		c.SetParamValues(fmt.Sprint(account.ID))
 
-		err := handlers.GetAllPhoneBooks(c)
+		err := phonebookHandler.GetAllPhoneBooks(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -196,8 +207,6 @@ func TestGetAllPhoneBooks(t *testing.T) {
 }
 
 func TestReadPhoneBook(t *testing.T) {
-	e := echo.New()
-
 	t.Run("Success", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, phoneBookID), nil)
 		rec := httptest.NewRecorder()
@@ -205,7 +214,7 @@ func TestReadPhoneBook(t *testing.T) {
 		c.SetParamNames("accountID", "phoneBookID")
 		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(phoneBookID))
 
-		err := handlers.ReadPhoneBook(c)
+		err := phonebookHandler.ReadPhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -226,7 +235,7 @@ func TestReadPhoneBook(t *testing.T) {
 		c.SetParamNames("accountID", "phoneBookID")
 		c.SetParamValues(fmt.Sprint(account.ID), "99999")
 
-		err := handlers.ReadPhoneBook(c)
+		err := phonebookHandler.ReadPhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -240,8 +249,6 @@ func TestReadPhoneBook(t *testing.T) {
 }
 
 func TestUpdatePhoneBook(t *testing.T) {
-	e := echo.New()
-
 	t.Run("Success", func(t *testing.T) {
 		phoneBookReq := handlers.PhoneBookRequest{
 			AccountID: account.ID,
@@ -258,7 +265,7 @@ func TestUpdatePhoneBook(t *testing.T) {
 		c.SetParamNames("accountID", "phoneBookID")
 		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(phoneBookID))
 
-		err = handlers.UpdatePhoneBook(c)
+		err = phonebookHandler.UpdatePhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -288,7 +295,7 @@ func TestUpdatePhoneBook(t *testing.T) {
 		c.SetParamNames("accountID", "phoneBookID")
 		c.SetParamValues(fmt.Sprint(account.ID), "99999")
 
-		err = handlers.UpdatePhoneBook(c)
+		err = phonebookHandler.UpdatePhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -302,8 +309,6 @@ func TestUpdatePhoneBook(t *testing.T) {
 }
 
 func TestDeletePhoneBook(t *testing.T) {
-	e := echo.New()
-
 	t.Run("Success", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, phoneBookID), nil)
 		rec := httptest.NewRecorder()
@@ -311,7 +316,7 @@ func TestDeletePhoneBook(t *testing.T) {
 		c.SetParamNames("accountID", "phoneBookID")
 		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(phoneBookID))
 
-		err := handlers.DeletePhoneBook(c)
+		err := phonebookHandler.DeletePhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -329,7 +334,7 @@ func TestDeletePhoneBook(t *testing.T) {
 		c.SetParamNames("accountID", "phoneBookID")
 		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(nonExistentPhoneBookID))
 
-		err := handlers.DeletePhoneBook(c)
+		err := phonebookHandler.DeletePhoneBook(c)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)

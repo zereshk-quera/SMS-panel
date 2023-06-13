@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 
 	echo "github.com/labstack/echo/v4"
@@ -26,6 +25,14 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+type PhonebookHandler struct {
+	db *gorm.DB
+}
+
+func NewPhonebookHandler(db *gorm.DB) *PhonebookHandler {
+	return &PhonebookHandler{db: db}
+}
+
 // @Summary Create a phone book entry
 // @Description Create a new phone book entry
 // @Tags phonebook
@@ -36,7 +43,7 @@ type ErrorResponse struct {
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /phonebook [post]
-func CreatePhoneBook(c echo.Context) error {
+func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 	var phoneBook models.PhoneBook
 	if err := c.Bind(&phoneBook); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -46,12 +53,7 @@ func CreatePhoneBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Name is required"})
 	}
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	if err := db.Create(&phoneBook).Error; err != nil {
+	if err := p.db.Create(&phoneBook).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create phone book"})
 	}
 
@@ -67,17 +69,12 @@ func CreatePhoneBook(c echo.Context) error {
 // @Success 200 {array} PhoneBookResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /account/{accountID}/phone-books/ [get]
-func GetAllPhoneBooks(c echo.Context) error {
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
+func (p *PhonebookHandler) GetAllPhoneBooks(c echo.Context) error {
 	accountID := c.Param("accountID")
 
 	var phoneBooks []models.PhoneBook
 	// Get all matched records
-	result := db.Where("account_id = ?", accountID).Find(&phoneBooks)
+	result := p.db.Where("account_id = ?", accountID).Find(&phoneBooks)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -96,18 +93,13 @@ func GetAllPhoneBooks(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {object} ErrorResponse
 // @Router /account/{accountID}/phone-books/{phoneBookID} [get]
-func ReadPhoneBook(c echo.Context) error {
+func (p *PhonebookHandler) ReadPhoneBook(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
 	accountID := c.Param("accountID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var phoneBook models.PhoneBook
 	// Find the phone book with matching phoneBookID and accountID
-	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phonebook not found")
@@ -131,18 +123,13 @@ func ReadPhoneBook(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {object} ErrorResponse
 // @Router /account/{accountID}/phone-books/{phoneBookID} [put]
-func UpdatePhoneBook(c echo.Context) error {
+func (p *PhonebookHandler) UpdatePhoneBook(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
 	accountID := c.Param("accountID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var phoneBook models.PhoneBook
 
-	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -155,7 +142,7 @@ func UpdatePhoneBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	result = db.Save(&phoneBook)
+	result = p.db.Save(&phoneBook)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -174,17 +161,12 @@ func UpdatePhoneBook(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {object} ErrorResponse
 // @Router /account/{accountID}/phone-books/{phoneBookID} [delete]
-func DeletePhoneBook(c echo.Context) error {
+func (p *PhonebookHandler) DeletePhoneBook(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
 	accountID := c.Param("accountID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var phoneBook models.PhoneBook
-	result := db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -193,7 +175,7 @@ func DeletePhoneBook(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
 
-	result = db.Delete(&phoneBook)
+	result = p.db.Delete(&phoneBook)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
