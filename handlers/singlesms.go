@@ -8,6 +8,7 @@ import (
 
 	database "SMS-panel/database"
 	"SMS-panel/models"
+	"SMS-panel/utils"
 )
 
 // SendSMSRequest represents the request body for sending an SMS message.
@@ -50,6 +51,14 @@ func SendSingleSMSHandler(c echo.Context) error {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid request payload",
+		}
+		return c.JSON(http.StatusBadRequest, errResponse)
+	}
+	// Validate the phone number
+	if !utils.ValidatePhone(reqBody.PhoneNumber) {
+		errResponse := ErrorResponseSingle{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid phone number",
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
