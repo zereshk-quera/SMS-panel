@@ -87,8 +87,8 @@ func TestRegisterHandler(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &responseMessage)
 		assert.NoError(t, err)
 
-		assert.Equal(t, 422, responseMessage.ResponseCode)
-		assert.Equal(t, "Input Json doesn't include firstname", responseMessage.Message)
+		var expectedMessage = models.Response{ResponseCode: 422, Message: "First Name can't be empty"}
+		assert.Equal(t, expectedMessage, responseMessage)
 
 	})
 	t.Run("Stupid User without LastName input", func(t *testing.T) {
@@ -119,8 +119,8 @@ func TestRegisterHandler(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &responseMessage)
 		assert.NoError(t, err)
 
-		assert.Equal(t, 422, responseMessage.ResponseCode)
-		assert.Equal(t, "Input Json doesn't include lastname", responseMessage.Message)
+		var expectedMessage = models.Response{ResponseCode: 422, Message: "Last Name can't be empty"}
+		assert.Equal(t, expectedMessage, responseMessage)
 
 	})
 
@@ -152,8 +152,8 @@ func TestRegisterHandler(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &responseMessage)
 		assert.NoError(t, err)
 
-		assert.Equal(t, 422, responseMessage.ResponseCode)
-		assert.Equal(t, "Input Json doesn't include email", responseMessage.Message)
+		var expectedMessage = models.Response{ResponseCode: 422, Message: "Invalid Email Address"}
+		assert.Equal(t, expectedMessage, responseMessage)
 
 	})
 }
