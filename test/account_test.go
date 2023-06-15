@@ -1,34 +1,36 @@
 package test
 
 import (
-	database "SMS-panel/database"
 	"SMS-panel/handlers"
 	"SMS-panel/models"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-)
-
-var (
-	e *echo.Echo
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 // @Router /accounts/register
 func TestRegisterHandler(t *testing.T) {
 	t.Run("Stupid User without FirstName input", func(t *testing.T) {
-		
+
 		withoutFirstNameUserCreate := handlers.UserCreateRequest{
 			//FirstName: "Rick",
-			LastName: "Sanchez",  		
-			Email: "RickSanchez@morty.com",
-			Phone: "09123456789",		
+			LastName:   "Sanchez",
+			Email:      "RickSanchez@morty.com",
+			Phone:      "09123456789",
 			NationalID: "0369734971",
-			Username: "ricksanchez",
-			Password: "123Rick123"  		
+			Username:   "ricksanchez",
+			Password:   "123Rick123",
 		}
 
 		reqBody, err := json.Marshal(withoutFirstNameUserCreate)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodPost, "/accounts/register",bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPost, "/accounts/register", bytes.NewReader(reqBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -46,21 +48,21 @@ func TestRegisterHandler(t *testing.T) {
 
 	})
 	t.Run("Stupid User without LastName input", func(t *testing.T) {
-		
+
 		withoutLastNameUserCreate := handlers.UserCreateRequest{
 			FirstName: "ًRick",
-			//LastName: "Sanchez",  		
-			Email: "RickSanchez@morty.com",
-			Phone: "09123456789",		
+			//LastName: "Sanchez",
+			Email:      "RickSanchez@morty.com",
+			Phone:      "09123456789",
 			NationalID: "0369734971",
-			Username: "ricksanchez",
-			Password: "123Rick123"  		
+			Username:   "ricksanchez",
+			Password:   "123Rick123",
 		}
 
 		reqBody, err := json.Marshal(withoutLastNameUserCreate)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodPost, "/accounts/register",bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPost, "/accounts/register", bytes.NewReader(reqBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
