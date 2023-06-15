@@ -10,24 +10,6 @@ import (
 	"SMS-panel/models"
 )
 
-/*
-// SendSMSRequest represents the request body for sending an SMS message
-type SendSMSRequest struct {
-	PhoneNumber string `json:"phone_number" example:"1234567890"`
-	Message     string `json:"message" example:"Hello, World!"`
-}
-
-// SendSMSResponse represents the response for sending an SMS message
-type SendSMSResponse struct {
-	Message string `json:"message" example:"SMS sent successfully"`
-}
-
-// ErrorResponseSingle represents the structure of an error response
-type ErrorResponseSingle struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-*/
 // SendSMSRequest represents the request body for sending an SMS message.
 type SendSMSRequest struct {
 	PhoneNumber string `json:"phone_number" example:"1234567890"`
@@ -72,8 +54,28 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
 
+	// Retrieve the cost of a single SMS from the configuration table
+	db, err := database.GetConnection()
+	if err != nil {
+		errResponse := ErrorResponseSingle{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, errResponse)
+	}
+
+	// Query the configuration table for the cost of a single SMS
+	var singleSMSCost int
+	if err := db.Table("configuration").Where("name = ?", "single sms").Select("value").Scan(&singleSMSCost).Error; err != nil {
+		errResponse := ErrorResponseSingle{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to retrieve single SMS cost",
+		}
+		return c.JSON(http.StatusInternalServerError, errResponse)
+	}
+
 	// Check if the user has sufficient budget
-	if account.Budget < 50 {
+	if account.Budget < int64(singleSMSCost) {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusForbidden,
 			Message: "Insufficient budget",
@@ -81,8 +83,8 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, errResponse)
 	}
 
-	// Reduce the budget by 50
-	account.Budget -= 50
+	// Reduce the budget by the cost of a single SMS
+	account.Budget -= int64(singleSMSCost)
 
 	// Call the mock API to send the SMS message
 	deliveryReport, err := SendMessageHandler(&Message{
@@ -110,15 +112,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 	}
 
 	// Save the SMS message in the database
-	db, err := database.GetConnection()
-	if err != nil {
-		errResponse := ErrorResponseSingle{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, errResponse)
-	}
-
 	if err := db.Create(&sms).Error; err != nil {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
