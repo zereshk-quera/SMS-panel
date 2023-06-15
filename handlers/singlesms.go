@@ -11,18 +11,15 @@ import (
 	"SMS-panel/utils"
 )
 
-// SendSMSRequest represents the request body for sending an SMS message.
 type SendSMSRequest struct {
 	PhoneNumber string `json:"phone_number" example:"1234567890"`
 	Message     string `json:"message" example:"Hello, World!"`
 }
 
-// SendSMSResponse represents the response for sending an SMS message.
 type SendSMSResponse struct {
 	Message string `json:"message" example:"SMS sent successfully"`
 }
 
-// ErrorResponseSingle represents the structure of an error response.
 type ErrorResponseSingle struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -42,10 +39,8 @@ type ErrorResponseSingle struct {
 // @Failure 500 {object} ErrorResponseSingle
 // @Router /sms/single-sms [post]
 func SendSingleSMSHandler(c echo.Context) error {
-	// Retrieve the logged-in account from the context
 	account := c.Get("account").(models.Account)
 
-	// Read the request body
 	reqBody := new(SendSMSRequest)
 	if err := c.Bind(reqBody); err != nil {
 		errResponse := ErrorResponseSingle{
@@ -54,7 +49,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
-	// Validate the phone number
 	if !utils.ValidatePhone(reqBody.PhoneNumber) {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusBadRequest,
@@ -63,7 +57,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
 
-	// Retrieve the cost of a single SMS from the configuration table
 	db, err := database.GetConnection()
 	if err != nil {
 		errResponse := ErrorResponseSingle{
@@ -73,7 +66,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
-	// Query the configuration table for the cost of a single SMS
 	var singleSMSCost int
 	if err := db.Table("configuration").Where("name = ?", "single sms").Select("value").Scan(&singleSMSCost).Error; err != nil {
 		errResponse := ErrorResponseSingle{
@@ -83,7 +75,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
-	// Check if the user has sufficient budget
 	if account.Budget < int64(singleSMSCost) {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusForbidden,
@@ -92,10 +83,8 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, errResponse)
 	}
 
-	// Reduce the budget by the cost of a single SMS
 	account.Budget -= int64(singleSMSCost)
 
-	// Call the mock API to send the SMS message
 	deliveryReport, err := SendMessageHandler(&Message{
 		Text:        reqBody.Message,
 		Source:      account.Username,
@@ -109,7 +98,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
-	// Create the SMS message object
 	sms := models.SMSMessage{
 		Sender:         account.Username,
 		Recipient:      reqBody.PhoneNumber,
@@ -120,7 +108,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		AccountID:      account.ID,
 	}
 
-	// Save the SMS message in the database
 	if err := db.Create(&sms).Error; err != nil {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
@@ -129,7 +116,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
-	// Update the account's budget in the database
 	if err := db.Model(&account).Update("budget", account.Budget).Error; err != nil {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
@@ -138,7 +124,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
-	// Return success response
 	response := SendSMSResponse{
 		Message: "SMS sent successfully",
 	}
