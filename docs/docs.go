@@ -639,6 +639,66 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/sms/single-sms": {
+            "post": {
+                "description": "Sends a single SMS message and saves the result in the SMSMessage table",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SMS"
+                ],
+                "summary": "Send Single SMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "\"account_token\"",
+                        "description": "account_token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body for sending an SMS message",
+                        "name": "sendSMSRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -712,6 +772,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.ErrorResponseSingle": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.LoginRequest": {
             "type": "object",
             "properties": {
@@ -749,6 +820,28 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.SendSMSRequest": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Hello, World!"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "1234567890"
+                }
+            }
+        },
+        "handlers.SendSMSResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "SMS sent successfully"
                 }
             }
         },
@@ -822,7 +915,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "SMS-PANEL",
-	Description:      "Simple SMS-PANEL server",
+	Description:      "Quera SMS-PANEL server",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
