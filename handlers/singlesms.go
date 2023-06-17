@@ -14,6 +14,7 @@ import (
 type SendSMSRequest struct {
 	PhoneNumber string `json:"phone_number" example:"1234567890"`
 	Message     string `json:"message" example:"Hello, World!"`
+	Username    string `json:"username" example:"johndoe"`
 }
 
 type SendSMSResponse struct {
@@ -91,15 +92,43 @@ func SendSingleSMSHandler(c echo.Context) error {
 	account.Budget -= int64(singleSMSCost)
 
 	var phoneNumber models.PhoneBookNumber
-	if err := tx.
-		Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id").
-		Where("phone_books.account_id = ? AND phone_book_numbers.phone = ?", account.ID, reqBody.PhoneNumber).
-		First(&phoneNumber).Error; err != nil {
-		phoneNumber = models.PhoneBookNumber{}
-	}
+	var message string
 
-	template := reqBody.Message
-	message := CreateSMSTemplate(template, phoneNumber)
+	if reqBody.Username != "" {
+		if err := tx.
+			Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id").
+			Where("phone_books.account_id = ? AND phone_book_numbers.username = ?", account.ID, reqBody.Username).
+			First(&phoneNumber).Error; err != nil {
+			phoneNumber = models.PhoneBookNumber{}
+		}
+		message = CreateSMSTemplate(reqBody.Message, phoneNumber)
+
+		if phoneNumber.ID == 0 {
+			tx.Rollback()
+			errResponse := ErrorResponseSingle{
+				Code:    http.StatusNotFound,
+				Message: "Username not found",
+			}
+			return c.JSON(http.StatusNotFound, errResponse)
+		}
+	} else {
+		if err := tx.
+			Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id").
+			Where("phone_books.account_id = ? AND phone_book_numbers.phone = ?", account.ID, reqBody.PhoneNumber).
+			First(&phoneNumber).Error; err != nil {
+			phoneNumber = models.PhoneBookNumber{}
+		}
+		message = CreateSMSTemplate(reqBody.Message, phoneNumber)
+
+		if phoneNumber.ID == 0 {
+			tx.Rollback()
+			errResponse := ErrorResponseSingle{
+				Code:    http.StatusNotFound,
+				Message: "Phone number not found",
+			}
+			return c.JSON(http.StatusNotFound, errResponse)
+		}
+	}
 
 	deliveryReport, err := SendMessageHandler(&Message{
 		Text:        message,

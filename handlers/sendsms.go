@@ -28,6 +28,7 @@ func CreateSMSTemplate(template string, phoneNumber models.PhoneBookNumber) stri
 
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 	template = strings.ReplaceAll(template, "%date", currentTime)
+	template = strings.ReplaceAll(template, "%username", phoneNumber.Username)
 
 	return template
 }

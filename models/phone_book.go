@@ -8,6 +8,7 @@ type PhoneBook struct {
 type PhoneBookNumber struct {
 	ID          uint   `gorm:"primary_key"`
 	PhoneBookID uint   `gorm:"not null"`
+	Username    string `gorm:"type:varchar(255);unique"`
 	Prefix      string `gorm:"type:varchar(255)"`
 	Name        string `gorm:"type:varchar(255)"`
 	Phone       string `gorm:"type:varchar(255)"`
