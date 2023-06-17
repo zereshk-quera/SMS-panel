@@ -49,6 +49,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
+
 	if !utils.ValidatePhone(reqBody.PhoneNumber) {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusBadRequest,
@@ -66,8 +67,11 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
+	tx := db.Begin()
+
 	var singleSMSCost int
-	if err := db.Table("configuration").Where("name = ?", "single sms").Select("value").Scan(&singleSMSCost).Error; err != nil {
+	if err := tx.Table("configuration").Where("name = ?", "single sms").Select("value").Scan(&singleSMSCost).Error; err != nil {
+		tx.Rollback()
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to retrieve single SMS cost",
@@ -76,6 +80,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 	}
 
 	if account.Budget < int64(singleSMSCost) {
+		tx.Rollback()
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusForbidden,
 			Message: "Insufficient budget",
@@ -85,12 +90,24 @@ func SendSingleSMSHandler(c echo.Context) error {
 
 	account.Budget -= int64(singleSMSCost)
 
+	var phoneNumber models.PhoneBookNumber
+	if err := tx.
+		Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id").
+		Where("phone_books.account_id = ? AND phone_book_numbers.phone = ?", account.ID, reqBody.PhoneNumber).
+		First(&phoneNumber).Error; err != nil {
+		phoneNumber = models.PhoneBookNumber{}
+	}
+
+	template := reqBody.Message
+	message := CreateSMSTemplate(template, phoneNumber)
+
 	deliveryReport, err := SendMessageHandler(&Message{
-		Text:        reqBody.Message,
+		Text:        message,
 		Source:      account.Username,
 		Destination: reqBody.PhoneNumber,
 	})
 	if err != nil {
+		tx.Rollback()
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to send SMS",
@@ -101,14 +118,15 @@ func SendSingleSMSHandler(c echo.Context) error {
 	sms := models.SMSMessage{
 		Sender:         account.Username,
 		Recipient:      reqBody.PhoneNumber,
-		Message:        reqBody.Message,
+		Message:        message,
 		Schedule:       nil,
 		DeliveryReport: deliveryReport,
 		CreatedAt:      time.Now(),
 		AccountID:      account.ID,
 	}
 
-	if err := db.Create(&sms).Error; err != nil {
+	if err := tx.Create(&sms).Error; err != nil {
+		tx.Rollback()
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to save SMS message",
@@ -116,13 +134,16 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
-	if err := db.Model(&account).Update("budget", account.Budget).Error; err != nil {
+	if err := tx.Model(&account).Update("budget", account.Budget).Error; err != nil {
+		tx.Rollback()
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to update account's budget",
 		}
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
+
+	tx.Commit()
 
 	response := SendSMSResponse{
 		Message: "SMS sent successfully",
