@@ -25,7 +25,8 @@ func StartServer() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// Account
-	accountRoutes(e)
+	accountHandler := handlers.NewAccountHandler(db)
+	accountRoutes(e, accountHandler)
 
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
