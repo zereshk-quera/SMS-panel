@@ -11,6 +11,7 @@ import (
 	"SMS-panel/models"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type SendSMSRequestPeriodic struct {
@@ -39,12 +40,12 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Recipient not provided")
 	}
 
-	var phoneBookNumbers []models.PhoneBookNumber
 	db, err := database.GetConnection()
 	if err != nil {
 		log.Printf("Failed to get database connection: %s", err.Error())
 		return fmt.Errorf("database issue")
 	}
+
 	phoneNumberQuery := db.Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id").
 		Where("phone_books.account_id = ?", account.ID)
 
@@ -56,12 +57,13 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 		phoneNumberQuery = phoneNumberQuery.Where("phone_book_numbers.phone_book_id = ?", request.PhoneBookID)
 	}
 
-	if err := phoneNumberQuery.Find(&phoneBookNumbers).Error; err != nil {
+	var phoneBookNumbers []models.PhoneBookNumber
+	if err := phoneNumberQuery.Preload("PhoneBook").Find(&phoneBookNumbers).Error; err != nil {
 		return c.String(http.StatusBadRequest, "Recipient does not exist in the phone book")
 	}
 
 	smsCount := len(phoneBookNumbers)
-	reduceAccountBudget(account, smsCount)
+	reduceAccountBudget(db, account, smsCount)
 
 	for _, phoneBookNumber := range phoneBookNumbers {
 		sms := &models.SMSMessage{
@@ -74,10 +76,44 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 
 		intervalDuration := time.Duration(request.Interval) * time.Second
 
-		go sendSMSWithRepetition(sms, intervalDuration)
+		go sendSMSWithRepetition(db, sms, intervalDuration)
 	}
 
 	return c.String(http.StatusOK, "SMS scheduled successfully")
+}
+
+func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Duration) {
+	for {
+		now := time.Now()
+
+		remainingTime := time.Until(*sms.Schedule)
+		if remainingTime > 0 {
+			time.Sleep(remainingTime)
+		}
+
+		deliveryReport, err := MockSendMessage(&Message{
+			Text:        sms.Message,
+			Source:      sms.Sender,
+			Destination: sms.Recipient,
+		})
+		if err != nil {
+			log.Printf("Failed to send SMS: %s", err.Error())
+		} else {
+			sms.DeliveryReport = deliveryReport
+		}
+
+		db.Model(sms).Updates(models.SMSMessage{
+			DeliveryReport: sms.DeliveryReport,
+		})
+
+		nextSchedule := now.Add(interval)
+
+		for nextSchedule.Before(time.Now()) {
+			nextSchedule = nextSchedule.Add(interval)
+		}
+
+		sms.Schedule = &nextSchedule
+	}
 }
 
 func parseTime(schedule string) (time.Time, error) {
@@ -103,64 +139,20 @@ func parseTime(schedule string) (time.Time, error) {
 	return scheduleTime, nil
 }
 
-func sendSMSWithRepetition(sms *models.SMSMessage, interval time.Duration) {
-	db, err := database.GetConnection()
-	if err != nil {
-		log.Printf("Failed to get database connection: %s", err.Error())
-		return
-	}
-
-	for {
-		now := time.Now()
-
-		remainingTime := time.Until(*sms.Schedule)
-		if remainingTime > 0 {
-			time.Sleep(remainingTime)
-		}
-
-		deliveryReport, err := MockSendMessage(&Message{
-			Text:        sms.Message,
-			Source:      sms.Sender,
-			Destination: sms.Recipient,
-		})
-		if err != nil {
-			log.Printf("Failed to send SMS: %s", err.Error())
-		} else {
-			sms.DeliveryReport = deliveryReport
-			err = db.Save(sms).Error
-			if err != nil {
-				log.Printf("Failed to update SMS delivery report: %s", err.Error())
-			}
-		}
-
-		nextSchedule := now.Add(interval)
-
-		for nextSchedule.Before(time.Now()) {
-			nextSchedule = nextSchedule.Add(interval)
-		}
-
-		sms.Schedule = &nextSchedule
-	}
-}
-
-func reduceAccountBudget(account models.Account, smsCount int) {
-	db, err := database.GetConnection()
-	if err != nil {
-		log.Printf("Failed to get database connection: %s", err.Error())
+func reduceAccountBudget(db *gorm.DB, account models.Account, smsCount int) {
+	var singleSMSCost, groupSMSCost int
+	if err := db.Table("configuration").
+		Where("name IN (?)", []string{"single sms", "group sms"}).
+		Pluck("value", []interface{}{&singleSMSCost, &groupSMSCost}).Error; err != nil {
+		log.Printf("Failed to retrieve SMS costs: %s", err.Error())
 		return
 	}
 
 	var smsCost int
 	if smsCount == 1 {
-		if err := db.Table("configuration").Where("name = ?", "single sms").Select("value").Scan(&smsCost).Error; err != nil {
-			log.Printf("Failed to retrieve single SMS cost: %s", err.Error())
-			return
-		}
+		smsCost = singleSMSCost
 	} else {
-		if err := db.Table("configuration").Where("name = ?", "group sms").Select("value").Scan(&smsCost).Error; err != nil {
-			log.Printf("Failed to retrieve group SMS cost: %s", err.Error())
-			return
-		}
+		smsCost = groupSMSCost
 	}
 
 	totalCost := smsCost * smsCount
