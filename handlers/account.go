@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // define this structs for swagger docs
@@ -47,6 +47,14 @@ type BudgetAmountResponse struct {
 	Amount int `json:"amount"`
 }
 
+type AccountHandler struct {
+	db *gorm.DB
+}
+
+func NewAccountHandler(db *gorm.DB) *AccountHandler {
+	return &AccountHandler{db: db}
+}
+
 // @Summary Register a new user
 // @Description Register a new user with the provided information
 // @Tags users
@@ -58,7 +66,7 @@ type BudgetAmountResponse struct {
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Failure 500 {object} ErrorResponseRegisterLogin
 // @Router /accounts/register [post]
-func RegisterHandler(c echo.Context) error {
+func (a AccountHandler) RegisterHandler(c echo.Context) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -97,12 +105,6 @@ func RegisterHandler(c echo.Context) error {
 	user.Phone = jsonBody["phone"].(string)
 	user.NationalID = jsonBody["nationalid"].(string)
 
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
-
 	// Check FirstName Validation
 	if len(strings.TrimSpace(user.FirstName)) == 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "First Name can't be empty"})
@@ -130,32 +132,32 @@ func RegisterHandler(c echo.Context) error {
 
 	// Is Input Phone Number Unique or Not
 	var existingUser models.User
-	db.Where("phone = ?", user.Phone).First(&existingUser)
+	a.db.Where("phone = ?", user.Phone).First(&existingUser)
 	if existingUser.ID != 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Phone Number has already been registered"})
 	}
 
 	// Is Input Email Address Unique or Not
-	db.Where("email = ?", user.Email).First(&existingUser)
+	a.db.Where("email = ?", user.Email).First(&existingUser)
 	if existingUser.ID != 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Email Address has already been registered"})
 	}
 
 	// Is Input National ID Unique or Not
-	db.Where("national_id = ?", user.NationalID).First(&existingUser)
+	a.db.Where("national_id = ?", user.NationalID).First(&existingUser)
 	if existingUser.ID != 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt National ID has already been registered"})
 	}
 
 	// Is Input Username Unique or Not
 	var existingAccount models.Account
-	db.Where("username = ?", jsonBody["username"].(string)).First(&existingAccount)
+	a.db.Where("username = ?", jsonBody["username"].(string)).First(&existingAccount)
 	if existingAccount.ID != 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Username has already been registered"})
 	}
 
 	// Insert User Object Into Database
-	createdUser := db.Create(&user)
+	createdUser := a.db.Create(&user)
 	if createdUser.Error != nil {
 		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "User Cration Failed"})
 	}
@@ -185,7 +187,7 @@ func RegisterHandler(c echo.Context) error {
 	account.Token = tokenString
 
 	// Insert Account Object Into Database
-	createdAccount := db.Create(&account)
+	createdAccount := a.db.Create(&account)
 	if createdAccount.Error != nil {
 		return c.JSON(http.StatusInternalServerError, account)
 	}
@@ -214,7 +216,7 @@ func RegisterHandler(c echo.Context) error {
 // @Failure 400 {object} ErrorResponseRegisterLogin
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Router  /accounts/login [post]
-func LoginHandler(c echo.Context) error {
+func (a AccountHandler) LoginHandler(c echo.Context) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -233,11 +235,8 @@ func LoginHandler(c echo.Context) error {
 	// Find account based on input username
 	username := jsonBody["username"].(string)
 	var account models.Account
-	db, err := database.GetConnection()
-	if err != nil {
-		return err
-	}
-	db.Where("username = ?", username).First(&account)
+
+	a.db.Where("username = ?", username).First(&account)
 
 	// Account Not Found
 	if account.ID == 0 {
@@ -262,7 +261,7 @@ func LoginHandler(c echo.Context) error {
 
 	// Update Account's Token In Database
 	account.Token = tokenString
-	db.Save(&account)
+	a.db.Save(&account)
 
 	// Check for Cookie Existence
 	hasCookie := false
@@ -298,7 +297,7 @@ func LoginHandler(c echo.Context) error {
 // @Success 200 {object} BudgetAmountResponse
 // @Failure 401 {string} string
 // @Router /accounts/budget	 [get]
-func BudgetAmountHandler(c echo.Context) error {
+func (a AccountHandler) BudgetAmountHandler(c echo.Context) error {
 	// Recieve Account Object
 	account := c.Get("account")
 
