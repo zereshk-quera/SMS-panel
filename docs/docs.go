@@ -833,6 +833,10 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string",
                     "example": "1234567890"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "johndoe"
                 }
             }
         },
@@ -901,6 +905,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "prefix": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

@@ -130,7 +130,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 		}
 	}
 
-	deliveryReport, err := SendMessageHandler(&Message{
+	deliveryReport, err := MockSendMessage(&Message{
 		Text:        message,
 		Source:      account.Username,
 		Destination: reqBody.PhoneNumber,

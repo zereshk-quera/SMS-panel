@@ -86,6 +86,9 @@ definitions:
       phone_number:
         example: "1234567890"
         type: string
+      username:
+        example: johndoe
+        type: string
     type: object
   handlers.SendSMSResponse:
     properties:
@@ -130,6 +133,8 @@ definitions:
       phoneBookID:
         type: integer
       prefix:
+        type: string
+      username:
         type: string
     type: object
 host: localhost:8080

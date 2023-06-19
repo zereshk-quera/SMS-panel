@@ -10,4 +10,5 @@ import (
 
 func smsRouter(e *echo.Echo) {
 	e.POST("sms/single-sms", handlers.SendSingleSMSHandler, middlewares.IsLoggedIn)
+	e.POST("/sms/periodic-sms", handlers.PeriodicSendSMSHandler, middlewares.IsLoggedIn)
 }
