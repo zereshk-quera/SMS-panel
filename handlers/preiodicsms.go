@@ -63,7 +63,11 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 	}
 
 	smsCount := len(phoneBookNumbers)
-	reduceAccountBudget(db, account, smsCount)
+	reduceErr := reduceAccountBudget(db, account, smsCount)
+
+	if reduceErr != nil {
+		return c.String(http.StatusBadRequest, "Insufficient budget")
+	}
 
 	for _, phoneBookNumber := range phoneBookNumbers {
 		sms := &models.SMSMessage{
@@ -102,7 +106,7 @@ func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Du
 			sms.DeliveryReport = deliveryReport
 		}
 
-		db.Model(sms).Updates(models.SMSMessage{
+		db.Model(sms).Where("id = ?", sms.ID).Updates(models.SMSMessage{
 			DeliveryReport: sms.DeliveryReport,
 		})
 
@@ -139,27 +143,37 @@ func parseTime(schedule string) (time.Time, error) {
 	return scheduleTime, nil
 }
 
-func reduceAccountBudget(db *gorm.DB, account models.Account, smsCount int) {
-	var singleSMSCost, groupSMSCost int
-	if err := db.Table("configuration").
-		Where("name IN (?)", []string{"single sms", "group sms"}).
-		Pluck("value", []interface{}{&singleSMSCost, &groupSMSCost}).Error; err != nil {
-		log.Printf("Failed to retrieve SMS costs: %s", err.Error())
-		return
-	}
-
+func reduceAccountBudget(db *gorm.DB, account models.Account, smsCount int) error {
 	var smsCost int
+
 	if smsCount == 1 {
-		smsCost = singleSMSCost
+		if err := db.Table("configuration").
+			Where("name = ?", "single sms").
+			Pluck("value", &smsCost).Error; err != nil {
+			log.Printf("Failed to retrieve single SMS cost: %s", err.Error())
+			return err
+		}
 	} else {
-		smsCost = groupSMSCost
+		if err := db.Table("configuration").
+			Where("name IN (?)", []string{"single sms", "group sms"}).
+			Pluck("value", &smsCost).Error; err != nil {
+			log.Printf("Failed to retrieve SMS costs: %s", err.Error())
+			return err
+		}
 	}
 
 	totalCost := smsCost * smsCount
+
+	if account.Budget < int64(totalCost) {
+		return fmt.Errorf("insufficient budget")
+	}
 
 	account.Budget -= int64(totalCost)
 
 	if err := db.Save(&account).Error; err != nil {
 		log.Printf("Failed to update account's budget: %s", err.Error())
+		return err
 	}
+
+	return nil
 }

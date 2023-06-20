@@ -12,4 +12,5 @@ type PhoneBookNumber struct {
 	Prefix      string `gorm:"type:varchar(255)"`
 	Name        string `gorm:"type:varchar(255)"`
 	Phone       string `gorm:"type:varchar(255)"`
+	PhoneBook   PhoneBook
 }
