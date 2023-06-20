@@ -42,7 +42,7 @@ func NewPhonebookHandler(db *gorm.DB) *PhonebookHandler {
 // @Success 200 {object} PhoneBookResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /phonebook [post]
+// @Router /account/phone-books/ [post]
 func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 	var phoneBook models.PhoneBook
 	if err := c.Bind(&phoneBook); err != nil {

@@ -71,18 +71,6 @@ definitions:
       name:
         type: string
     type: object
-host: localhost:8080
-info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Simple SMS-PANEL server
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: SMS-PANEL
-  version: "1.0"
   handlers.UpdatePhoneBookNumberRequest:
     properties:
       name:
@@ -122,8 +110,18 @@ info:
       prefix:
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Quera SMS-PANEL server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: SMS-PANEL
+  version: "1.0"
 paths:
   /account/{accountID}/phone-books/:
     get:
@@ -260,6 +258,36 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Update a phone book
+      tags:
+      - phonebook
+  /account/phone-books/:
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book entry
+      parameters:
+      - description: Phone book entry data
+        in: body
+        name: phoneBook
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PhoneBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a phone book entry
       tags:
       - phonebook
   /account/phone-books/{phoneBookID}/phone-book-numbers:
@@ -501,34 +529,4 @@ paths:
       summary: Register a new user
       tags:
       - users
-  /phonebook:
-    post:
-      consumes:
-      - application/json
-      description: Create a new phone book entry
-      parameters:
-      - description: Phone book entry data
-        in: body
-        name: phoneBook
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.PhoneBookRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.PhoneBookResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create a phone book entry
-      tags:
-      - phonebook
 swagger: "2.0"
