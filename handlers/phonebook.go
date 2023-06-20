@@ -39,7 +39,7 @@ func NewPhonebookHandler(db *gorm.DB) *PhonebookHandler {
 // @Accept json
 // @Produce json
 // @Param phoneBook body PhoneBookRequest true "Phone book entry data"
-// @Success 200 {object} PhoneBookResponse
+// @Success 201 {object} PhoneBookResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /account/phone-books/ [post]

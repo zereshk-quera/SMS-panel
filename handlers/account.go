@@ -61,7 +61,7 @@ func NewAccountHandler(db *gorm.DB) *AccountHandler {
 // @Accept json
 // @Produce json
 // @Param body body UserCreateRequest true "User registration details"
-// @Success 200 {object} AccountResponse
+// @Success 201 {object} AccountResponse
 // @Failure 400 {object} ErrorResponseRegisterLogin
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Failure 500 {object} ErrorResponseRegisterLogin
