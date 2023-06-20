@@ -17,6 +17,11 @@ definitions:
       Username:
         type: string
     type: object
+  handlers.AmountFee:
+    properties:
+      fee:
+        type: integer
+    type: object
   handlers.BudgetAmountResponse:
     properties:
       amount:
@@ -71,18 +76,11 @@ definitions:
       name:
         type: string
     type: object
-host: localhost:8080
-info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Simple SMS-PANEL server
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: SMS-PANEL
-  version: "1.0"
+  handlers.RequestResponse:
+    properties:
+      payment_url:
+        type: string
+    type: object
   handlers.UpdatePhoneBookNumberRequest:
     properties:
       name:
@@ -109,6 +107,13 @@ info:
       username:
         type: string
     type: object
+  handlers.VerifyResponse:
+    properties:
+      Authority:
+        type: string
+      Status:
+        type: string
+    type: object
   models.PhoneBookNumber:
     properties:
       id:
@@ -122,8 +127,18 @@ info:
       prefix:
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Quera SMS-PANEL server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: SMS-PANEL
+  version: "1.0"
 paths:
   /account/{accountID}/phone-books/:
     get:
@@ -467,6 +482,74 @@ paths:
       summary: User login
       tags:
       - users
+  /accounts/payment/request:
+    post:
+      consumes:
+      - application/json
+      description: Zarinpal Payment to add budget to account
+      parameters:
+      - description: Payment request details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AmountFee'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RequestResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Add budget request
+      tags:
+      - payment
+  /accounts/payment/verify:
+    get:
+      consumes:
+      - application/json
+      description: Verify Zarinpal Payment to add budget to account
+      parameters:
+      - description: Payment verify details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VerifyResponse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "422":
+          description: Unprocessable Entity
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Verify budget payment and add budget
+      tags:
+      - payment
   /accounts/register:
     post:
       consumes:
