@@ -277,6 +277,36 @@ paths:
       summary: Update a phone book
       tags:
       - phonebook
+  /account/phone-books/:
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book entry
+      parameters:
+      - description: Phone book entry data
+        in: body
+        name: phoneBook
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PhoneBookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a phone book entry
+      tags:
+      - phonebook
   /account/phone-books/{phoneBookID}/phone-book-numbers:
     get:
       consumes:
@@ -565,8 +595,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/handlers.AccountResponse'
         "400":
@@ -584,34 +614,4 @@ paths:
       summary: Register a new user
       tags:
       - users
-  /phonebook:
-    post:
-      consumes:
-      - application/json
-      description: Create a new phone book entry
-      parameters:
-      - description: Phone book entry data
-        in: body
-        name: phoneBook
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.PhoneBookRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.PhoneBookResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create a phone book entry
-      tags:
-      - phonebook
 swagger: "2.0"

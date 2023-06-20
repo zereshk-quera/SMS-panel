@@ -55,12 +55,12 @@ func TestMain(m *testing.M) {
 		panic("failed to create test data: " + err.Error())
 	}
 
+	code := m.Run()
+
 	err = cleanupTestData()
 	if err != nil {
 		panic("failed to cleanup test data: " + err.Error())
 	}
-
-	code := m.Run()
 
 	os.Exit(code)
 }

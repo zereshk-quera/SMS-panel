@@ -39,10 +39,10 @@ func NewPhonebookHandler(db *gorm.DB) *PhonebookHandler {
 // @Accept json
 // @Produce json
 // @Param phoneBook body PhoneBookRequest true "Phone book entry data"
-// @Success 200 {object} PhoneBookResponse
+// @Success 201 {object} PhoneBookResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /phonebook [post]
+// @Router /account/phone-books/ [post]
 func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 	var phoneBook models.PhoneBook
 	if err := c.Bind(&phoneBook); err != nil {
