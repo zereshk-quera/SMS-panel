@@ -70,10 +70,11 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 	}
 
 	for _, phoneBookNumber := range phoneBookNumbers {
+		templateMessage := CreateSMSTemplate(request.Message, phoneBookNumber)
 		sms := &models.SMSMessage{
 			Sender:    account.Username,
 			Recipient: phoneBookNumber.Phone,
-			Message:   request.Message,
+			Message:   templateMessage,
 			AccountID: account.ID,
 			Schedule:  &scheduleTime,
 		}
@@ -92,7 +93,8 @@ func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Du
 
 		remainingTime := time.Until(*sms.Schedule)
 		if remainingTime > 0 {
-			time.Sleep(remainingTime)
+			timer := time.NewTimer(remainingTime)
+			<-timer.C
 		}
 
 		deliveryReport, err := MockSendMessage(&Message{
@@ -109,6 +111,8 @@ func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Du
 		db.Model(sms).Where("id = ?", sms.ID).Updates(models.SMSMessage{
 			DeliveryReport: sms.DeliveryReport,
 		})
+
+		time.Sleep(time.Second)
 
 		nextSchedule := now.Add(interval)
 
