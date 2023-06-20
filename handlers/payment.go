@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	merchantID       = "860C78FA-D6A9-48AE-805D-2B33B52309D2"
-	callbackURL      = "http://localhost:8080/accounts/payment/verify"
-	zaringpalRequest = "https://sandbox.banktest.ir/zarinpal/api.zarinpal.com/pg/v4/payment/request.json"
-	zaringpalVerify  = "https://sandbox.banktest.ir/zarinpal/api.zarinpal.com/pg/v4/payment/verify.json"
-	zarinpalGateURL  = "https://sandbox.banktest.ir/zarinpal/www.zarinpal.com/pg/StartPay/"
+	merchantID      = "860C78FA-D6A9-48AE-805D-2B33B52309D2"
+	callbackURL     = "http://localhost:8080/accounts/payment/verify"
+	zarinpalRequest = "https://sandbox.banktest.ir/zarinpal/api.zarinpal.com/pg/v4/payment/request.json"
+	zarinpalVerify  = "https://sandbox.banktest.ir/zarinpal/api.zarinpal.com/pg/v4/payment/verify.json"
+	zarinpalGateURL = "https://sandbox.banktest.ir/zarinpal/www.zarinpal.com/pg/StartPay/"
 )
 
 type ZarinpalData struct {
@@ -118,7 +118,7 @@ func PaymentRequestHandler(c echo.Context) error {
 		})
 	}
 
-	resp, err := http.Post(zaringpalRequest, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(zarinpalRequest, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return c.JSON(http.StatusBadGateway, models.Response{
 			ResponseCode: 502,
@@ -208,7 +208,7 @@ func PaymentVerifyHandler(c echo.Context) error {
 		})
 	}
 
-	resp, err := http.Post(zaringpalVerify, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(zarinpalVerify, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return c.JSON(http.StatusBadGateway, models.Response{
 			ResponseCode: 502,
