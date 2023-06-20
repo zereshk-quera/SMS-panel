@@ -30,7 +30,6 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Invalid request payload")
 	}
 
-	// Parse the schedule time
 	scheduleTime, err := parseTime(request.Schedule)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "Invalid schedule time format")
@@ -81,13 +80,13 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 
 		intervalDuration := time.Duration(request.Interval) * time.Second
 
-		go sendSMSWithRepetition(db, sms, intervalDuration)
+		go sendSMSWithRepetition(db, sms, intervalDuration, account)
 	}
 
 	return c.String(http.StatusOK, "SMS scheduled successfully")
 }
 
-func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Duration) {
+func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Duration, account models.Account) {
 	for {
 		now := time.Now()
 
@@ -95,6 +94,12 @@ func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Du
 		if remainingTime > 0 {
 			timer := time.NewTimer(remainingTime)
 			<-timer.C
+		}
+
+		reduceErr := reduceAccountBudget(db, account, 1)
+		if reduceErr != nil {
+			log.Printf("Failed to reduce account budget: %s", reduceErr.Error())
+			break
 		}
 
 		deliveryReport, err := MockSendMessage(&Message{
