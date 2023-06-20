@@ -28,6 +28,9 @@ func StartServer() {
 	accountHandler := handlers.NewAccountHandler(db)
 	accountRoutes(e, accountHandler)
 
+	// Payment
+	paymentRoutes(e)
+
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)

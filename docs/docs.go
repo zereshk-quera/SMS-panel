@@ -588,6 +588,110 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/payment/request": {
+            "post": {
+                "description": "Zarinpal Payment to add budget to account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Add budget request",
+                "parameters": [
+                    {
+                        "description": "Payment request details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AmountFee"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RequestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/payment/verify": {
+            "get": {
+                "description": "Verify Zarinpal Payment to add budget to account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Verify budget payment and add budget",
+                "parameters": [
+                    {
+                        "description": "Payment verify details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.VerifyResponse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/accounts/register": {
             "post": {
                 "description": "Register a new user with the provided information",
@@ -665,6 +769,14 @@ const docTemplate = `{
                 },
                 "Username": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.AmountFee": {
+            "type": "object",
+            "properties": {
+                "fee": {
+                    "type": "integer"
                 }
             }
         },
@@ -752,6 +864,14 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.RequestResponse": {
+            "type": "object",
+            "properties": {
+                "payment_url": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.UpdatePhoneBookNumberRequest": {
             "type": "object",
             "properties": {
@@ -788,6 +908,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.VerifyResponse": {
+            "type": "object",
+            "properties": {
+                "Authority": {
+                    "type": "string"
+                },
+                "Status": {
                     "type": "string"
                 }
             }
