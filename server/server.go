@@ -27,6 +27,9 @@ func StartServer() {
 	// Account
 	accountRoutes(e)
 
+	// Payment
+	paymentRoutes(e)
+
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)
