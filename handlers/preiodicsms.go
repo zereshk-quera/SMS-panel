@@ -19,7 +19,7 @@ type SendSMSRequestPeriodic struct {
 	Phone       string `json:"phone"`
 	Message     string `json:"message"`
 	Schedule    string `json:"schedule"`
-	Interval    int    `json:"interval"`
+	Interval    string `json:"interval"`
 	PhoneBookID string `json:"phone_book_id"`
 }
 
@@ -78,25 +78,41 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 			Schedule:  &scheduleTime,
 		}
 
-		intervalDuration := time.Duration(request.Interval) * time.Second
+		intervalStr := request.Interval
 
-		go sendSMSWithRepetition(db, sms, intervalDuration, account)
+		go sendSMSWithRepetition(db, sms, intervalStr, account)
 	}
 
 	return c.String(http.StatusOK, "SMS scheduled successfully")
 }
 
-func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Duration, account models.Account) {
-	for {
-		now := time.Now()
+func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, intervalStr string, account models.Account) {
+	scheduleTime := *sms.Schedule
+	now := time.Now()
 
-		remainingTime := time.Until(*sms.Schedule)
+	var nextSchedule time.Time
+	switch intervalStr {
+	case "hourly":
+		for nextSchedule.Before(now) || nextSchedule.Equal(now) {
+			nextSchedule = nextSchedule.Add(time.Hour)
+		}
+	case "daily":
+		scheduleDateTime := time.Date(now.Year(), now.Month(), now.Day(), scheduleTime.Hour(), scheduleTime.Minute(), 0, 0, now.Location())
+		nextSchedule = scheduleDateTime.AddDate(0, 0, 1)
+	}
+
+	for {
+		remainingTime := time.Until(nextSchedule)
+		log.Println("Remaining time until next schedule:", remainingTime)
+
 		if remainingTime > 0 {
 			timer := time.NewTimer(remainingTime)
 			<-timer.C
 		}
 
 		reduceErr := reduceAccountBudget(db, account, 1)
+		log.Println("Budget reduced")
+
 		if reduceErr != nil {
 			log.Printf("Failed to reduce account budget: %s", reduceErr.Error())
 			break
@@ -107,6 +123,7 @@ func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Du
 			Source:      sms.Sender,
 			Destination: sms.Recipient,
 		})
+
 		if err != nil {
 			log.Printf("Failed to send SMS: %s", err.Error())
 		} else {
@@ -119,13 +136,12 @@ func sendSMSWithRepetition(db *gorm.DB, sms *models.SMSMessage, interval time.Du
 
 		time.Sleep(time.Second)
 
-		nextSchedule := now.Add(interval)
-
-		for nextSchedule.Before(time.Now()) {
-			nextSchedule = nextSchedule.Add(interval)
+		switch intervalStr {
+		case "hourly":
+			nextSchedule = nextSchedule.Add(time.Hour)
+		case "daily":
+			nextSchedule = nextSchedule.AddDate(0, 0, 1)
 		}
-
-		sms.Schedule = &nextSchedule
 	}
 }
 
