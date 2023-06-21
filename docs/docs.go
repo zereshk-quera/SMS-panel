@@ -24,6 +24,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/account/phone-books/": {
+            "post": {
+                "description": "Create a new phone book entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "phonebook"
+                ],
+                "summary": "Create a phone book entry",
+                "parameters": [
+                    {
+                        "description": "Phone book entry data",
+                        "name": "phoneBook",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PhoneBookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PhoneBookResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/account/phone-books/phone-book-numbers": {
             "post": {
                 "description": "Create a new phone book number",
@@ -542,6 +588,110 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/payment/request": {
+            "post": {
+                "description": "Zarinpal Payment to add budget to account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Add budget request",
+                "parameters": [
+                    {
+                        "description": "Payment request details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AmountFee"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RequestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/payment/verify": {
+            "get": {
+                "description": "Verify Zarinpal Payment to add budget to account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Verify budget payment and add budget",
+                "parameters": [
+                    {
+                        "description": "Payment verify details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.VerifyResponse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/accounts/register": {
             "post": {
                 "description": "Register a new user with the provided information",
@@ -567,8 +717,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/handlers.AccountResponse"
                         }
@@ -589,52 +739,6 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponseRegisterLogin"
-                        }
-                    }
-                }
-            }
-        },
-        "/phonebook": {
-            "post": {
-                "description": "Create a new phone book entry",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "phonebook"
-                ],
-                "summary": "Create a phone book entry",
-                "parameters": [
-                    {
-                        "description": "Phone book entry data",
-                        "name": "phoneBook",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.PhoneBookRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.PhoneBookResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -725,6 +829,14 @@ const docTemplate = `{
                 },
                 "Username": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.AmountFee": {
+            "type": "object",
+            "properties": {
+                "fee": {
+                    "type": "integer"
                 }
             }
         },
@@ -823,6 +935,7 @@ const docTemplate = `{
                 }
             }
         },
+
         "handlers.SendSMSRequest": {
             "type": "object",
             "properties": {
@@ -846,6 +959,11 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "SMS sent successfully"
+        "handlers.RequestResponse": {
+            "type": "object",
+            "properties": {
+                "payment_url": {
+                    "type": "string"
                 }
             }
         },
@@ -885,6 +1003,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.VerifyResponse": {
+            "type": "object",
+            "properties": {
+                "Authority": {
+                    "type": "string"
+                },
+                "Status": {
                     "type": "string"
                 }
             }

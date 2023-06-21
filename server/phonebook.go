@@ -16,9 +16,9 @@ func phonebookRoutes(e *echo.Echo, handler *handlers.PhonebookHandler) {
 	e.DELETE("/account/:accountID/phone-books/:phoneBookID", handler.DeletePhoneBook)
 
 	// Phone book number URLs
-	e.POST("/account/phone-books/phone-book-numbers", handlers.CreatePhoneBookNumber)
-	e.GET("/account/phone-books/:phoneBookID/phone-book-numbers", handlers.ListPhoneBookNumbers)
-	e.GET("/account/phone-books/phone-book-numbers/:phoneBookNumberID", handlers.ReadPhoneBookNumber)
-	e.PUT("/account/phone-books/phone-book-numbers/:phoneBookNumberID", handlers.UpdatePhoneBookNumber)
-	e.DELETE("/account/phone-books/phone-book-numbers/:phoneBookNumberID", handlers.DeletePhoneBookNumber)
+	e.POST("/account/phone-books/phone-book-numbers", handler.CreatePhoneBookNumber)
+	e.GET("/account/phone-books/:phoneBookID/phone-book-numbers", handler.ListPhoneBookNumbers)
+	e.GET("/account/phone-books/phone-book-numbers/:phoneBookNumberID", handler.ReadPhoneBookNumber)
+	e.PUT("/account/phone-books/phone-book-numbers/:phoneBookNumberID", handler.UpdatePhoneBookNumber)
+	e.DELETE("/account/phone-books/phone-book-numbers/:phoneBookNumberID", handler.DeletePhoneBookNumber)
 }
