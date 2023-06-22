@@ -935,7 +935,14 @@ const docTemplate = `{
                 }
             }
         },
-
+        "handlers.RequestResponse": {
+            "type": "object",
+            "properties": {
+                "payment_url": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.SendSMSRequest": {
             "type": "object",
             "properties": {
@@ -959,11 +966,6 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "SMS sent successfully"
-        "handlers.RequestResponse": {
-            "type": "object",
-            "properties": {
-                "payment_url": {
-                    "type": "string"
                 }
             }
         },
@@ -1018,6 +1020,20 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PhoneBook": {
+            "type": "object",
+            "properties": {
+                "accountID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.PhoneBookNumber": {
             "type": "object",
             "properties": {
@@ -1029,6 +1045,9 @@ const docTemplate = `{
                 },
                 "phone": {
                     "type": "string"
+                },
+                "phoneBook": {
+                    "$ref": "#/definitions/models.PhoneBook"
                 },
                 "phoneBookID": {
                     "type": "integer"
