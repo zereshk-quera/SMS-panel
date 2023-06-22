@@ -78,7 +78,6 @@ func ListPhoneBookNumbers(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-
 	var phoneBookNumbers []models.PhoneBookNumber
 	result := db.Where("phone_book_id = ?", phoneBookID).Find(&phoneBookNumbers)
 	if result.Error != nil {
