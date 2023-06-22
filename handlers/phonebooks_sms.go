@@ -30,6 +30,7 @@ func NewSmsPhoneBookHandler(db *gorm.DB) *SmsPhoneBookHandler {
 // @Produce json
 // @Param body body SendSMessageToPhoneBooksBody true "Phone books sms details."
 // @Success 200 {object} SendSMSResponse
+// @Failure 204 {object} ErrorResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /sms/phonebooks [post]
@@ -40,8 +41,7 @@ func (sp *SmsPhoneBookHandler) SendMessageToPhoneBooksHandler(c echo.Context) er
 	ctx := c.Request().Context()
 
 	if err := c.Bind(&body); err != nil {
-		errResponse := ErrorResponseSingle{
-			Code:    http.StatusBadRequest,
+		errResponse := ErrorResponse{
 			Message: "Invalid request payload",
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
@@ -51,17 +51,20 @@ func (sp *SmsPhoneBookHandler) SendMessageToPhoneBooksHandler(c echo.Context) er
 	if err != nil {
 		switch e := err.(type) {
 		case PhoneBooksNotFoundError:
-			errorResponse := ErrorResponseSingle{
-				Code:    http.StatusNotFound,
+			errorResponse := ErrorResponse{
 				Message: err.Error(),
 			}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		case AcountDoesNotHaveBudgetError:
-			errorResponse := ErrorResponseSingle{
-				Code:    http.StatusBadRequest,
+			errorResponse := ErrorResponse{
 				Message: err.Error(),
 			}
 			return c.JSON(http.StatusBadRequest, errorResponse)
+		case PhoneBooksNumbersAreEmptyError:
+			errorResponse := ErrorResponse{
+				Message: err.Error(),
+			}
+			return c.JSON(http.StatusNoContent, errorResponse)
 		default:
 			log.Println(e)
 		}
