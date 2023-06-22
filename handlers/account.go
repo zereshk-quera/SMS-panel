@@ -165,6 +165,7 @@ func RegisterHandler(c echo.Context) error {
 	account.UserID = user.ID
 	account.Username = jsonBody["username"].(string)
 	account.Budget = 0
+	account.IsAdmin = false
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(jsonBody["password"].(string)), bcrypt.DefaultCost)
 	if err != nil {
@@ -175,8 +176,9 @@ func RegisterHandler(c echo.Context) error {
 
 	// Generate Token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  account.ID,
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"id":    account.ID,
+		"exp":   time.Now().Add(time.Hour).Unix(),
+		"admin": false,
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
@@ -189,6 +191,15 @@ func RegisterHandler(c echo.Context) error {
 	if createdAccount.Error != nil {
 		return c.JSON(http.StatusInternalServerError, account)
 	}
+
+	cc := &http.Cookie{
+		Name:   "account_token",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	c.SetCookie(cc)
+	c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
 
 	// Create Cookie
 	cookie := &http.Cookie{
@@ -250,10 +261,16 @@ func LoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Wrond Password"})
 	}
 
+	//Account isn't active
+	if !account.IsActive {
+		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "Your Account Isn't Active"})
+	}
+
 	// Generate Token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  account.ID,
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"id":    account.ID,
+		"exp":   time.Now().Add(time.Hour).Unix(),
+		"admin": false,
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
@@ -268,7 +285,7 @@ func LoginHandler(c echo.Context) error {
 	hasCookie := false
 	cookies := c.Cookies()
 	for _, cookie := range cookies {
-		if cookie.Name == "account_token" {
+		if cookie.Name == "account_token" && cookie.Value == account.Token {
 			hasCookie = true
 			break
 		}
@@ -276,6 +293,15 @@ func LoginHandler(c echo.Context) error {
 
 	// Create Cookie
 	if !hasCookie {
+		cc := &http.Cookie{
+			Name:   "account_token",
+			Value:  "",
+			Path:   "/",
+			MaxAge: -1,
+		}
+		c.SetCookie(cc)
+		c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
+
 		cookie := &http.Cookie{
 			Name:     "account_token",
 			Value:    account.Token,

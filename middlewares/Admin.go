@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"os"
 
-	database "SMS-panel/database"
-	"SMS-panel/models"
 	"fmt"
 	"time"
 
@@ -13,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
+func IsAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		//Get Cookie
 		cookies := c.Cookies()
@@ -56,35 +54,11 @@ func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 				return echo.ErrUnauthorized
 			}
 
-			//Connect To Database
-			db, err := database.GetConnection()
-			if err != nil {
-				return echo.ErrInternalServerError
-			}
-
-			//Find Account
-			var account models.Account
-			db.First(&account, claims["id"])
-
-			//Token And Id are not For Same Accounts
-			if account.ID == 0 {
-				return echo.ErrUnauthorized
-			}
-			//account is deactive
-			if account.Token == "" && account.IsActive == false {
-				cookie := &http.Cookie{
-					Name:   "account_token",
-					Value:  "",
-					Path:   "/",
-					MaxAge: -1,
-				}
-				c.SetCookie(cookie)
-				c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
+			//account isn't an admin
+			if claims["admin"].(bool) == false {
 				return echo.ErrUnauthorized
 			}
 
-			//Add Account Object To Context
-			c.Set("account", account)
 			return next(c)
 
 		} else {

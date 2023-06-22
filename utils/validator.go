@@ -4,6 +4,7 @@ import (
 	"net/mail"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // This Function Validates Input Email.
@@ -57,4 +58,9 @@ func ValidateNationalID(id string) bool {
 	s = s % 11
 
 	return (s < 2 && c == s) || (s >= 2 && c == (11-s))
+}
+
+func ValidateTimeFormat(timeStr string) bool {
+	_, err := time.Parse("15:04", timeStr)
+	return err == nil
 }
