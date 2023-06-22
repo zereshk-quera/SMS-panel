@@ -50,6 +50,13 @@ definitions:
       responsecode:
         type: integer
     type: object
+  handlers.ErrorResponseSingle:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
   handlers.LoginRequest:
     properties:
       password:
@@ -79,6 +86,24 @@ definitions:
   handlers.RequestResponse:
     properties:
       payment_url:
+        type: string
+    type: object
+  handlers.SendSMSRequest:
+    properties:
+      message:
+        example: Hello, World!
+        type: string
+      phone_number:
+        example: "1234567890"
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  handlers.SendSMSResponse:
+    properties:
+      message:
+        example: SMS sent successfully
         type: string
     type: object
   handlers.UpdatePhoneBookNumberRequest:
@@ -114,6 +139,15 @@ definitions:
       Status:
         type: string
     type: object
+  models.PhoneBook:
+    properties:
+      accountID:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   models.PhoneBookNumber:
     properties:
       id:
@@ -122,9 +156,13 @@ definitions:
         type: string
       phone:
         type: string
+      phoneBook:
+        $ref: '#/definitions/models.PhoneBook'
       phoneBookID:
         type: integer
       prefix:
+        type: string
+      username:
         type: string
     type: object
 host: localhost:8080
@@ -614,4 +652,45 @@ paths:
       summary: Register a new user
       tags:
       - users
+  /sms/single-sms:
+    post:
+      consumes:
+      - application/json
+      description: Sends a single SMS message and saves the result in the SMSMessage
+        table
+      parameters:
+      - default: '"account_token"'
+        description: account_token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Request body for sending an SMS message
+        in: body
+        name: sendSMSRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendSMSRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SendSMSResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+      summary: Send Single SMS
+      tags:
+      - SMS
 swagger: "2.0"

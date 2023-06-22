@@ -1,9 +1,10 @@
 package server
 
 import (
+	"log"
+
 	database "SMS-panel/database"
 	"SMS-panel/handlers"
-	"log"
 
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -34,6 +35,7 @@ func StartServer() {
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)
+	smsRouter(e)
 
 	log.Fatal(e.Start(":8080"))
 }
