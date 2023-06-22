@@ -106,6 +106,18 @@ definitions:
         example: SMS sent successfully
         type: string
     type: object
+  handlers.SendSMessageToPhoneBooksBody:
+    properties:
+      message:
+        type: string
+      phoneBooks:
+        items:
+          type: string
+        type: array
+    required:
+    - message
+    - phoneBooks
+    type: object
   handlers.UpdatePhoneBookNumberRequest:
     properties:
       name:
@@ -652,6 +664,40 @@ paths:
       summary: Register a new user
       tags:
       - users
+  /sms/phonebooks:
+    post:
+      consumes:
+      - application/json
+      description: Send sms to phone books numbers
+      parameters:
+      - description: Phone books sms details.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendSMessageToPhoneBooksBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SendSMSResponse'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Send sms to phone books numbers
+      tags:
+      - SMS
   /sms/single-sms:
     post:
       consumes:

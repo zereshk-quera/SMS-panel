@@ -744,6 +744,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/sms/phonebooks": {
+            "post": {
+                "description": "Send sms to phone books numbers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SMS"
+                ],
+                "summary": "Send sms to phone books numbers",
+                "parameters": [
+                    {
+                        "description": "Phone books sms details.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMessageToPhoneBooksBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSResponse"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sms/single-sms": {
             "post": {
                 "description": "Sends a single SMS message and saves the result in the SMSMessage table",
@@ -966,6 +1018,24 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "SMS sent successfully"
+                }
+            }
+        },
+        "handlers.SendSMessageToPhoneBooksBody": {
+            "type": "object",
+            "required": [
+                "message",
+                "phoneBooks"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "phoneBooks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
