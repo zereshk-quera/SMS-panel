@@ -35,7 +35,11 @@ func StartServer() {
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)
-	smsRouter(e)
+	
+	// SMS
+	smsHandler := handlers.NewSmsPhoneBookHandler(db)
+	smsRouter(e, smsHandler)
+
 
 	log.Fatal(e.Start(":8080"))
 }
