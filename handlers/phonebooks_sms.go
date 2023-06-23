@@ -11,7 +11,7 @@ import (
 
 type SendSMessageToPhoneBooksBody struct {
 	Account    models.Account `json:"-"`
-	PhoneBooks []string          `json:"phoneBooks" binding:"required"`
+	PhoneBooks []string       `json:"phoneBooks" binding:"required"`
 	Message    string         `json:"message" binding:"required"`
 }
 

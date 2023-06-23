@@ -744,6 +744,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/sender_numbers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "retrieves All sender numbers available for the account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get All sender numbers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SenderNumbersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/sms/phonebooks": {
             "post": {
                 "description": "Send sms to phone books numbers",
@@ -1032,6 +1063,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "phoneBooks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handlers.SenderNumbersResponse": {
+            "type": "object",
+            "properties": {
+                "numbers": {
                     "type": "array",
                     "items": {
                         "type": "string"
