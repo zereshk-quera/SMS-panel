@@ -24,9 +24,10 @@ func DeactivateHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// check json format
-	if _, ok := jsonBody["id"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include id"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "id")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	// Connect To The Datebase
@@ -64,9 +65,10 @@ func ActivateHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// check json format
-	if _, ok := jsonBody["id"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include id"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "id")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	// Connect To The Datebase
@@ -107,12 +109,10 @@ func AdminLoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// Check json format
-	if _, ok := jsonBody["username"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include username"})
-	}
-	if _, ok := jsonBody["password"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include password"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "username", "password")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	// Find account based on input username
@@ -199,12 +199,10 @@ func AddConfigHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// Check json format
-	if _, ok := jsonBody["name"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include name"})
-	}
-	if _, ok := jsonBody["value"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include value"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "name", "value")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	var conf models.Configuration
@@ -234,27 +232,10 @@ func AdminRegisterHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// check json format
-	if _, ok := jsonBody["firstname"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include firstname"})
-	}
-	if _, ok := jsonBody["lastname"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include lastname"})
-	}
-	if _, ok := jsonBody["email"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include email"})
-	}
-	if _, ok := jsonBody["phone"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include phone"})
-	}
-	if _, ok := jsonBody["nationalid"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include nationalid"})
-	}
-	if _, ok := jsonBody["username"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include username"})
-	}
-	if _, ok := jsonBody["password"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include password"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "firstname", "lastname", "email", "phone", "nationalid", "username", "password")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	//check password correction
@@ -454,9 +435,10 @@ func SmsSearchHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// check json format
-	if _, ok := jsonBody["word"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include word"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "word")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	// Connect To The Datebase
@@ -499,9 +481,10 @@ func AddBadWordHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	// check json format
-	if _, ok := jsonBody["word"]; !ok {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include word"})
+	//check json format
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "word")
+	if jsonFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
 	// Connect To The Datebase
@@ -521,5 +504,4 @@ func AddBadWordHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "Bad Word Cration Failed"})
 	}
 	return c.JSON(http.StatusOK, bw)
-
 }
