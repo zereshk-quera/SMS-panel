@@ -83,7 +83,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreatePhoneBookNumberRequest"
+                            "$ref": "#/definitions/models.PhoneBookNumber"
                         }
                     }
                 ],
@@ -841,23 +841,6 @@
                 }
             }
         },
-        "handlers.CreatePhoneBookNumberRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "phoneBookID": {
-                    "type": "integer"
-                },
-                "prefix": {
-                    "type": "string"
-                }
-            }
-        },
         "handlers.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -928,6 +911,14 @@
                 }
             }
         },
+        "handlers.RequestResponse": {
+            "type": "object",
+            "properties": {
+                "payment_url": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.SendSMSRequest": {
             "type": "object",
             "properties": {
@@ -951,12 +942,6 @@
                 "message": {
                     "type": "string",
                     "example": "SMS sent successfully"
-
-        "handlers.RequestResponse": {
-            "type": "object",
-            "properties": {
-                "payment_url": {
-                    "type": "string"
                 }
             }
         },
@@ -1011,6 +996,20 @@
                 }
             }
         },
+        "models.PhoneBook": {
+            "type": "object",
+            "properties": {
+                "accountID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.PhoneBookNumber": {
             "type": "object",
             "properties": {
@@ -1022,6 +1021,9 @@
                 },
                 "phone": {
                     "type": "string"
+                },
+                "phoneBook": {
+                    "$ref": "#/definitions/models.PhoneBook"
                 },
                 "phoneBookID": {
                     "type": "integer"
