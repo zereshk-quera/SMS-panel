@@ -96,9 +96,13 @@ definitions:
       phone_number:
         example: "1234567890"
         type: string
+      senderNumbers:
+        type: string
       username:
         example: johndoe
         type: string
+    required:
+    - senderNumbers
     type: object
   handlers.SendSMSResponse:
     properties:
@@ -114,9 +118,12 @@ definitions:
         items:
           type: string
         type: array
+      senderNumbers:
+        type: string
     required:
     - message
     - phoneBooks
+    - senderNumbers
     type: object
   handlers.SenderNumbersResponse:
     properties:

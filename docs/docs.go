@@ -1028,6 +1028,9 @@ const docTemplate = `{
         },
         "handlers.SendSMSRequest": {
             "type": "object",
+            "required": [
+                "senderNumbers"
+            ],
             "properties": {
                 "message": {
                     "type": "string",
@@ -1036,6 +1039,9 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string",
                     "example": "1234567890"
+                },
+                "senderNumbers": {
+                    "type": "string"
                 },
                 "username": {
                     "type": "string",
@@ -1056,7 +1062,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "message",
-                "phoneBooks"
+                "phoneBooks",
+                "senderNumbers"
             ],
             "properties": {
                 "message": {
@@ -1067,6 +1074,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "senderNumbers": {
+                    "type": "string"
                 }
             }
         },

@@ -334,7 +334,8 @@ func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
 	err := a.db.Model(&models.SenderNumber{}).
 		Select("sender_numbers.number").
 		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
-		Where("sender_numbers.is_default=true or user_numbers.user_id = ?", account.UserID).
+		Where("sender_numbers.is_default=true or (user_numbers.user_id = ? and user_numbers.is_available=true)",
+			account.UserID).
 		Scan(&senderNumbersObjects).Error
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"SMS-panel/models"
+	"SMS-panel/utils"
 
 	"gorm.io/gorm"
 )
@@ -36,6 +37,14 @@ type PhoneBooksNumbersAreEmptyError struct {
 }
 
 func (e PhoneBooksNumbersAreEmptyError) Error() string {
+	return fmt.Sprintf(e.Message)
+}
+
+type SenderNumberNotFoundError struct {
+	Message string
+}
+
+func (e SenderNumberNotFoundError) Error() string {
 	return fmt.Sprintf(e.Message)
 }
 
@@ -81,6 +90,14 @@ func SendMessageToPhoneBooks(
 	}
 	if !phoneBooksExist {
 		return PhoneBooksNotFoundError{Message: "Phone book not found!"}
+	}
+
+	// Check if sender number is available
+	senderNumberExisted := utils.IsSenderNumberExist(
+		ctx, db, body.SenderNumber, body.Account.UserID,
+	)
+	if !senderNumberExisted {
+		return SenderNumberNotFoundError{Message: "Sender number not found!"}
 	}
 
 	// Fetch all phone book numbers
@@ -134,7 +151,7 @@ func SendMessageToPhoneBooks(
 		phoneNumber := phoneBookNumbers[messageStatus.ID]
 		message := CreateSMSTemplate(body.Message, phoneNumber)
 		sms := models.SMSMessage{
-			Sender:    body.Account.Username,
+			Sender:    body.SenderNumber,
 			Recipient: phoneNumber.Phone,
 			Message:   message,
 			Schedule:  nil,
@@ -200,8 +217,8 @@ func sendMessageApiWithSuccess(message string, phoneNumber string) error {
 }
 
 func sendMessageApi(message string, phoneNumber string) error {
-	return sendMessageApiWithError(message, phoneNumber)
-	// return sendMessageApiWithSuccess(message, phoneNumber)
+	// return sendMessageApiWithError(message, phoneNumber)
+	return sendMessageApiWithSuccess(message, phoneNumber)
 }
 
 func SendGroupMessage(

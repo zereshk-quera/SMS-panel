@@ -1021,6 +1021,9 @@
         },
         "handlers.SendSMSRequest": {
             "type": "object",
+            "required": [
+                "senderNumbers"
+            ],
             "properties": {
                 "message": {
                     "type": "string",
@@ -1029,6 +1032,9 @@
                 "phone_number": {
                     "type": "string",
                     "example": "1234567890"
+                },
+                "senderNumbers": {
+                    "type": "string"
                 },
                 "username": {
                     "type": "string",
@@ -1049,7 +1055,8 @@
             "type": "object",
             "required": [
                 "message",
-                "phoneBooks"
+                "phoneBooks",
+                "senderNumbers"
             ],
             "properties": {
                 "message": {
@@ -1060,6 +1067,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "senderNumbers": {
+                    "type": "string"
                 }
             }
         },
