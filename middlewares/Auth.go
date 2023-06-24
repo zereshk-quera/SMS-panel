@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"net/http"
 	"os"
 
 	database "SMS-panel/database"
@@ -15,19 +14,12 @@ import (
 
 func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		//Get Cookie
-		cookies := c.Cookies()
-		tokenString := ""
-		for _, cookie := range cookies {
-			if cookie.Name == "account_token" {
-				tokenString = cookie.Value
-				break
-			}
-		}
+		req := c.Request()
+		tokenString := req.Header.Get("Authorization")
 
 		//Account Doesn't have Token
 		if tokenString == "" {
-			return echo.ErrUnauthorized
+			return echo.ErrConflict
 		}
 
 		//Parse Token
@@ -45,14 +37,6 @@ func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 
 			//Check Expiration Time
 			if float64(time.Now().Unix()) > claims["exp"].(float64) {
-				cookie := &http.Cookie{
-					Name:   "account_token",
-					Value:  "",
-					Path:   "/",
-					MaxAge: -1,
-				}
-				c.SetCookie(cookie)
-				c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
 				return echo.ErrUnauthorized
 			}
 
@@ -72,14 +56,6 @@ func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 			//account is deactive
 			if account.Token == "" && account.IsActive == false {
-				cookie := &http.Cookie{
-					Name:   "account_token",
-					Value:  "",
-					Path:   "/",
-					MaxAge: -1,
-				}
-				c.SetCookie(cookie)
-				c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
 				return echo.ErrUnauthorized
 			}
 

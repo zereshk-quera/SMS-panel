@@ -1,7 +1,8 @@
 package middlewares
 
 import (
-	"net/http"
+	database "SMS-panel/database"
+	"SMS-panel/models"
 	"os"
 
 	"fmt"
@@ -13,19 +14,12 @@ import (
 
 func IsAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		//Get Cookie
-		cookies := c.Cookies()
-		tokenString := ""
-		for _, cookie := range cookies {
-			if cookie.Name == "account_token" {
-				tokenString = cookie.Value
-				break
-			}
-		}
+		req := c.Request()
+		tokenString := req.Header.Get("Authorization")
 
 		//Account Doesn't have Token
 		if tokenString == "" {
-			return echo.ErrUnauthorized
+			return echo.ErrConflict
 		}
 
 		//Parse Token
@@ -43,19 +37,30 @@ func IsAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 
 			//Check Expiration Time
 			if float64(time.Now().Unix()) > claims["exp"].(float64) {
-				cookie := &http.Cookie{
-					Name:   "account_token",
-					Value:  "",
-					Path:   "/",
-					MaxAge: -1,
-				}
-				c.SetCookie(cookie)
-				c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
 				return echo.ErrUnauthorized
 			}
 
+			//Connect To Database
+			db, err := database.GetConnection()
+			if err != nil {
+				return echo.ErrInternalServerError
+			}
 			//account isn't an admin
 			if claims["admin"].(bool) == false {
+				return echo.ErrUnauthorized
+			}
+
+			//Find Account
+			var account models.Account
+			db.First(&account, claims["id"])
+
+			//Token And Id are not For Same Accounts
+			if account.ID == 0 {
+				return echo.ErrUnauthorized
+			}
+
+			//account isn't active
+			if account.Token == "" && account.IsActive == false {
 				return echo.ErrUnauthorized
 			}
 

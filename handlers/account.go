@@ -3,17 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
-	"strings"
-	"time"
 
 	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // define this structs for swagger docs
@@ -72,69 +67,22 @@ func RegisterHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	// Create User Object
-	var user models.User
-	user.FirstName = jsonBody["firstname"].(string)
-	user.LastName = jsonBody["lastname"].(string)
-	user.Email = jsonBody["email"].(string)
-	user.Phone = jsonBody["phone"].(string)
-	user.NationalID = jsonBody["nationalid"].(string)
-
 	// Connect To The Datebase
 	db, err := database.GetConnection()
 	if err != nil {
 		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
 	}
 
-	// Check FirstName Validation
-	if len(strings.TrimSpace(user.FirstName)) == 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "First Name can't be empty"})
+	//check user validation
+	userFormatValidationMsg, user, userFormatErr := utils.ValidateUser(jsonBody)
+	if userFormatErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: userFormatValidationMsg})
 	}
 
-	// Check LastName Validation
-	if len(strings.TrimSpace(user.LastName)) == 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Last Name can't be empty"})
-	}
-
-	// Check Phone Number Validation
-	if !utils.ValidatePhone(user.Phone) {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid Phone Number"})
-	}
-
-	// Check Email Validation
-	if !utils.ValidateEmail(user.Email) {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid Email Address"})
-	}
-
-	// Check NationalID Validation
-	if !utils.ValidateNationalID(user.NationalID) {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid National ID"})
-	}
-
-	// Is Input Phone Number Unique or Not
-	var existingUser models.User
-	db.Where("phone = ?", user.Phone).First(&existingUser)
-	if existingUser.ID != 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Phone Number has already been registered"})
-	}
-
-	// Is Input Email Address Unique or Not
-	db.Where("email = ?", user.Email).First(&existingUser)
-	if existingUser.ID != 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Email Address has already been registered"})
-	}
-
-	// Is Input National ID Unique or Not
-	db.Where("national_id = ?", user.NationalID).First(&existingUser)
-	if existingUser.ID != 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt National ID has already been registered"})
-	}
-
-	// Is Input Username Unique or Not
-	var existingAccount models.Account
-	db.Where("username = ?", jsonBody["username"].(string)).First(&existingAccount)
-	if existingAccount.ID != 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Inupt Username has already been registered"})
+	//check unique
+	userUniqueMsg, userUniqueErr := utils.CheckUnique(user, jsonBody["username"].(string), db)
+	if userUniqueErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: userUniqueMsg})
 	}
 
 	// Insert User Object Into Database
@@ -143,56 +91,11 @@ func RegisterHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "User Cration Failed"})
 	}
 
-	// Instantiating Account Object
-	var account models.Account
-	account.UserID = user.ID
-	account.Username = jsonBody["username"].(string)
-	account.Budget = 0
-	account.IsAdmin = false
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(jsonBody["password"].(string)), bcrypt.DefaultCost)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 422, Message: "Failed to Hashing Password"})
+	//create account
+	accountCreationMsg, account, accountCreationErr := utils.CreateAccount(int(user.ID), jsonBody["username"].(string), false, jsonBody["password"].(string), db)
+	if accountCreationErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: accountCreationMsg})
 	}
-
-	account.Password = string(hash)
-
-	// Generate Token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    account.ID,
-		"exp":   time.Now().Add(time.Hour).Unix(),
-		"admin": false,
-	})
-	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "Failed To Create Token"})
-	}
-	account.Token = tokenString
-
-	// Insert Account Object Into Database
-	createdAccount := db.Create(&account)
-	if createdAccount.Error != nil {
-		return c.JSON(http.StatusInternalServerError, account)
-	}
-
-	cc := &http.Cookie{
-		Name:   "account_token",
-		Value:  "",
-		Path:   "/",
-		MaxAge: -1,
-	}
-	c.SetCookie(cc)
-	c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
-
-	// Create Cookie
-	cookie := &http.Cookie{
-		Name:     "account_token",
-		Value:    account.Token,
-		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: true,
-	}
-	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, account)
 }
@@ -222,75 +125,16 @@ func LoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	// Find account based on input username
-	username := jsonBody["username"].(string)
-	var account models.Account
+	//get database connection
 	db, err := database.GetConnection()
 	if err != nil {
 		return err
 	}
-	db.Where("username = ?", username).First(&account)
 
-	// Account Not Found
-	if account.ID == 0 {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid Username"})
-	}
-
-	// Incorrect Password
-	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(jsonBody["password"].(string)))
-	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Wrond Password"})
-	}
-
-	//Account isn't active
-	if !account.IsActive {
-		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "Your Account Isn't Active"})
-	}
-
-	// Generate Token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    account.ID,
-		"exp":   time.Now().Add(time.Hour).Unix(),
-		"admin": false,
-	})
-	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "Failed To Create Token"})
-	}
-
-	// Update Account's Token In Database
-	account.Token = tokenString
-	db.Save(&account)
-
-	// Check for Cookie Existence
-	hasCookie := false
-	cookies := c.Cookies()
-	for _, cookie := range cookies {
-		if cookie.Name == "account_token" && cookie.Value == account.Token {
-			hasCookie = true
-			break
-		}
-	}
-
-	// Create Cookie
-	if !hasCookie {
-		cc := &http.Cookie{
-			Name:   "account_token",
-			Value:  "",
-			Path:   "/",
-			MaxAge: -1,
-		}
-		c.SetCookie(cc)
-		c.SetCookie(&http.Cookie{Name: "account_token", MaxAge: -1})
-
-		cookie := &http.Cookie{
-			Name:     "account_token",
-			Value:    account.Token,
-			Path:     "/",
-			MaxAge:   3600,
-			HttpOnly: true,
-		}
-		c.SetCookie(cookie)
+	//find account based on username and check password correction
+	findAccountMsg, account, findAccountErr := utils.Login(jsonBody["username"].(string), jsonBody["password"].(string), false, db)
+	if findAccountErr != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: findAccountMsg})
 	}
 
 	return c.JSON(http.StatusOK, account)
