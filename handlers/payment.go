@@ -34,18 +34,24 @@ type ZarinpalResponse struct {
 	Errors []interface{} `json:"errors"`
 }
 
-type ZarinpalVerifyData struct {
-	Code       int    `json:"code"`
-	RefrenceID int    `json:"ref_id"`
-	CardNum    string `json:"card_pan"`
-	CardHash   string `json:"card_hash"`
-	FeeType    string `json:"fee_type"`
-	Fee        int    `json:"fee"`
-}
-
 type ZarinpalVerify struct {
 	Data   ZarinpalVerifyData `json:"data"`
-	Errors []interface{}      `json:"errors"`
+	Errors ZarinpalErrors     `json:"errors"`
+}
+
+type ZarinpalVerifyData struct {
+	Code     int    `json:"code"`
+	Message  string `json:"message"`
+	CardHash string `json:"card_hash"`
+	CardPan  string `json:"card_pan"`
+	RefID    int    `json:"ref_id"`
+	FeeType  string `json:"fee_type"`
+	Fee      int    `json:"fee"`
+}
+
+type ZarinpalErrors struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
 }
 
 type AmountFee struct {
@@ -217,39 +223,37 @@ func PaymentVerifyHandler(c echo.Context) error {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	// Read Request Body
+	jsonBody := make(map[string]interface{})
+	err = json.NewDecoder(resp.Body).Decode(&jsonBody)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, models.Response{
-			ResponseCode: 500,
-			Message:      "Failed to read body",
-		})
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	var result ZarinpalVerify
-	if err := json.Unmarshal(body, &result); err != nil {
-		return c.JSON(http.StatusInternalServerError, models.Response{
-			ResponseCode: 500,
-			Message:      "Failed to parse response",
-		})
-	}
+	if data, ok := jsonBody["data"]; ok {
+		if dataMap, ok := data.(map[string]interface{}); ok {
+			if code, ok := dataMap["code"]; ok {
+				if code == float64(100) {
+					transaction.Status = "Okay"
+					db.Save(&transaction)
 
-	if result.Data.Code == 100 {
-		transaction.Status = "Okay"
-		db.Save(&transaction)
+					accountID := transaction.AccountID
+					var account models.Account
+					if err := db.First(&account, accountID).Error; err != nil {
+						// Handle the error (e.g., account not found)
+						return c.JSON(http.StatusNotFound, models.Response{ResponseCode: 404, Message: "Account Not Founded"})
+					}
 
-		accountID := transaction.AccountID
-		var account models.Account
-		if err := db.First(&account, accountID).Error; err != nil {
-			// Handle the error (e.g., account not found)
-			return c.JSON(http.StatusNotFound, models.Response{ResponseCode: 404, Message: "Account Not Founded"})
+					account.Budget += transaction.Amount
+					db.Save(&account)
+
+					return c.JSON(http.StatusOK, "Successful Payment")
+				} else if code == float64(101) {
+					return c.JSON(http.StatusOK, "Transaction had verified")
+				}
+			}
 		}
 
-		account.Budget += transaction.Amount
-		db.Save(&account)
-
-		return c.JSON(http.StatusOK, "Successful Payment")
-	} else if result.Data.Code == 101 {
-		return c.JSON(http.StatusOK, "Transaction had verified")
 	}
 
 	transaction.Status = "Failed"
