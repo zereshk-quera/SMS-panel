@@ -96,9 +96,13 @@ definitions:
       phone_number:
         example: "1234567890"
         type: string
+      senderNumbers:
+        type: string
       username:
         example: johndoe
         type: string
+    required:
+    - senderNumbers
     type: object
   handlers.SendSMSResponse:
     properties:
@@ -114,9 +118,19 @@ definitions:
         items:
           type: string
         type: array
+      senderNumbers:
+        type: string
     required:
     - message
     - phoneBooks
+    - senderNumbers
+    type: object
+  handlers.SenderNumbersResponse:
+    properties:
+      numbers:
+        items:
+          type: string
+        type: array
     type: object
   handlers.UpdatePhoneBookNumberRequest:
     properties:
@@ -662,6 +676,25 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
       summary: Register a new user
+      tags:
+      - users
+  /accounts/sender_numbers:
+    get:
+      description: retrieves All sender numbers available for the account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SenderNumbersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get All sender numbers
       tags:
       - users
   /sms/phonebooks:

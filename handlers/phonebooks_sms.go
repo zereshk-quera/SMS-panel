@@ -10,9 +10,10 @@ import (
 )
 
 type SendSMessageToPhoneBooksBody struct {
-	Account    models.Account `json:"-"`
-	PhoneBooks []string          `json:"phoneBooks" binding:"required"`
-	Message    string         `json:"message" binding:"required"`
+	Account      models.Account `json:"-"`
+	SenderNumber string         `json:"senderNumbers" binding:"required"`
+	PhoneBooks   []string       `json:"phoneBooks" binding:"required"`
+	Message      string         `json:"message" binding:"required"`
 }
 
 type SmsPhoneBookHandler struct {
@@ -49,24 +50,24 @@ func (sp *SmsPhoneBookHandler) SendMessageToPhoneBooksHandler(c echo.Context) er
 
 	err := SendMessageToPhoneBooks(ctx, body, sp.db)
 	if err != nil {
+		errorResponse := ErrorResponse{
+			Message: err.Error(),
+		}
 		switch e := err.(type) {
 		case PhoneBooksNotFoundError:
-			errorResponse := ErrorResponse{
-				Message: err.Error(),
-			}
 			return c.JSON(http.StatusNotFound, errorResponse)
 		case AcountDoesNotHaveBudgetError:
-			errorResponse := ErrorResponse{
-				Message: err.Error(),
-			}
 			return c.JSON(http.StatusBadRequest, errorResponse)
 		case PhoneBooksNumbersAreEmptyError:
-			errorResponse := ErrorResponse{
-				Message: err.Error(),
-			}
 			return c.JSON(http.StatusNoContent, errorResponse)
+		case SenderNumberNotFoundError:
+			return c.JSON(http.StatusNotFound, errorResponse)
 		default:
 			log.Println(e)
+			errorResponse := ErrorResponse{
+				Message: "Internal server error!",
+			}
+			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 	}
 

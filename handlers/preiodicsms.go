@@ -9,22 +9,25 @@ import (
 
 	database "SMS-panel/database"
 	"SMS-panel/models"
+	"SMS-panel/utils"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
 type SendSMSRequestPeriodic struct {
-	Username    string `json:"username"`
-	Phone       string `json:"phone"`
-	Message     string `json:"message"`
-	Schedule    string `json:"schedule"`
-	Interval    string `json:"interval"`
-	PhoneBookID string `json:"phone_book_id"`
+	Username     string `json:"username"`
+	SenderNumber string `json:"senderNumbers" binding:"required"`
+	Phone        string `json:"phone"`
+	Message      string `json:"message"`
+	Schedule     string `json:"schedule"`
+	Interval     string `json:"interval"`
+	PhoneBookID  string `json:"phone_book_id"`
 }
 
 func PeriodicSendSMSHandler(c echo.Context) error {
 	account := c.Get("account").(models.Account)
+	ctx := c.Request().Context()
 	var request SendSMSRequestPeriodic
 	if err := c.Bind(&request); err != nil {
 		return c.String(http.StatusBadRequest, "Invalid request payload")
@@ -43,6 +46,18 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 	if err != nil {
 		log.Printf("Failed to get database connection: %s", err.Error())
 		return fmt.Errorf("database issue")
+	}
+
+	// Check if sender number is available
+	senderNumberExisted := utils.IsSenderNumberExist(
+		ctx, db, request.SenderNumber, account.UserID,
+	)
+	if !senderNumberExisted {
+		errResponse := ErrorResponseSingle{
+			Code:    http.StatusNotFound,
+			Message: "Sender number not found!",
+		}
+		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
 
 	phoneNumberQuery := db.Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id").
@@ -71,7 +86,7 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 	for _, phoneBookNumber := range phoneBookNumbers {
 		templateMessage := CreateSMSTemplate(request.Message, phoneBookNumber)
 		sms := &models.SMSMessage{
-			Sender:    account.Username,
+			Sender:    request.SenderNumber,
 			Recipient: phoneBookNumber.Phone,
 			Message:   templateMessage,
 			AccountID: account.ID,

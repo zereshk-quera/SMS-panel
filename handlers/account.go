@@ -47,6 +47,10 @@ type BudgetAmountResponse struct {
 	Amount int `json:"amount"`
 }
 
+type SenderNumbersResponse struct {
+	Numbers []string `json:"numbers"`
+}
+
 type AccountHandler struct {
 	db *gorm.DB
 }
@@ -311,4 +315,36 @@ func (a AccountHandler) BudgetAmountHandler(c echo.Context) error {
 		Amount: budget,
 	}
 	return c.JSON(http.StatusOK, res)
+}
+
+// GetAllSenderNumbersHandler retrieves All sender numbers available for the account
+// @Summary Get All sender numbers
+// @Description retrieves All sender numbers available for the account
+// @Tags users
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 200 {object} SenderNumbersResponse
+// @Failure 401 {string} string
+// @Router /accounts/sender_numbers	 [get]
+func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
+	account := c.Get("account").(models.Account)
+
+	var senderNumbersObjects []models.SenderNumber
+
+	err := a.db.Model(&models.SenderNumber{}).
+		Select("sender_numbers.number").
+		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
+		Where("sender_numbers.is_default=true or (user_numbers.user_id = ? and user_numbers.is_available=true)",
+			account.UserID).
+		Scan(&senderNumbersObjects).Error
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+	var senderNumbers []string
+	for _, n := range senderNumbersObjects {
+		senderNumbers = append(senderNumbers, n.Number)
+	}
+
+	return c.JSON(http.StatusOK, SenderNumbersResponse{Numbers: senderNumbers})
+
 }
