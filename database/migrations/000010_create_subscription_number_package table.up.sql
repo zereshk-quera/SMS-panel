@@ -1,4 +1,5 @@
 CREATE TABLE IF NOT EXISTS subscription_number_package (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(55) NOT NULL UNIQUE
+    title VARCHAR(55) NOT NULL UNIQUE,
+    price BIGINT
 );

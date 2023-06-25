@@ -744,6 +744,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/rent_number": {
+            "post": {
+                "description": "Rent available number for this account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Rent number",
+                "parameters": [
+                    {
+                        "description": "Get sender number and subscription package.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RentNumberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/accounts/sender_numbers": {
             "get": {
                 "security": [
@@ -1018,6 +1070,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.RentNumberRequest": {
+            "type": "object",
+            "properties": {
+                "SubscriptionNumberPackageID": {
+                    "type": "integer"
+                },
+                "senderNumberID": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.RequestResponse": {
             "type": "object",
             "properties": {
@@ -1179,6 +1242,17 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "responsecode": {
+                    "type": "integer"
                 }
             }
         }

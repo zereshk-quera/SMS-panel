@@ -83,6 +83,13 @@ definitions:
       name:
         type: string
     type: object
+  handlers.RentNumberRequest:
+    properties:
+      SubscriptionNumberPackageID:
+        type: integer
+      senderNumberID:
+        type: integer
+    type: object
   handlers.RequestResponse:
     properties:
       payment_url:
@@ -190,6 +197,13 @@ definitions:
         type: string
       username:
         type: string
+    type: object
+  models.Response:
+    properties:
+      message:
+        type: string
+      responsecode:
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -676,6 +690,40 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
       summary: Register a new user
+      tags:
+      - users
+  /accounts/rent_number:
+    post:
+      consumes:
+      - application/json
+      description: Rent available number for this account
+      parameters:
+      - description: Get sender number and subscription package.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RentNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Rent number
       tags:
       - users
   /accounts/sender_numbers:
