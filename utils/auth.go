@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"SMS-panel/models"
 	"errors"
 	"os"
 	"strings"
 	"time"
+
+	"SMS-panel/models"
 
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
@@ -61,21 +62,21 @@ func CheckUnique(user models.User, username string, db *gorm.DB) (string, error)
 	var existingUser models.User
 	db.Where("phone = ?", user.Phone).First(&existingUser)
 	if existingUser.ID != 0 {
-		msg = "Inupt Phone Number has already been registered"
+		msg = "Input Phone Number has already been registered"
 		return msg, errors.New("")
 	}
 
 	// Is Input Email Address Unique or Not
 	db.Where("email = ?", user.Email).First(&existingUser)
 	if existingUser.ID != 0 {
-		msg = "Inupt Email Address has already been registered"
+		msg = "Input Email Address has already been registered"
 		return msg, errors.New("")
 	}
 
 	// Is Input National ID Unique or Not
 	db.Where("national_id = ?", user.NationalID).First(&existingUser)
 	if existingUser.ID != 0 {
-		msg = "Inupt National ID has already been registered"
+		msg = "Input National ID has already been registered"
 		return msg, errors.New("")
 	}
 
@@ -83,7 +84,7 @@ func CheckUnique(user models.User, username string, db *gorm.DB) (string, error)
 	var existingAccount models.Account
 	db.Where("username = ?", username).First(&existingAccount)
 	if existingAccount.ID != 0 {
-		msg = "Inupt Username has already been registered"
+		msg = "Input Username has already been registered"
 		return msg, errors.New("")
 	}
 	return msg, nil
@@ -100,7 +101,7 @@ func CreateAccount(user_id int, username string, is_admin bool, password string,
 	account.IsAdmin = is_admin
 	account.Token = ""
 
-	//hash password
+	// hash password
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		msg = "Failed to Hashing Password"
@@ -108,14 +109,14 @@ func CreateAccount(user_id int, username string, is_admin bool, password string,
 	}
 	account.Password = string(hash)
 
-	//insert account into database
+	// insert account into database
 	createdAccount := db.Create(&account)
 	if createdAccount.Error != nil {
 		msg = "Failed to Create Account"
 		return msg, models.Account{}, errors.New("")
 	}
 
-	//generate token
+	// generate token
 	var token *jwt.Token
 	if is_admin {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -137,11 +138,10 @@ func CreateAccount(user_id int, username string, is_admin bool, password string,
 	}
 	account.Token = tokenString
 
-	//update account
+	// update account
 	db.Save(&account)
 
 	return msg, account, nil
-
 }
 
 func Login(username, password string, is_admin bool, db *gorm.DB) (string, models.Account, error) {
@@ -160,7 +160,7 @@ func Login(username, password string, is_admin bool, db *gorm.DB) (string, model
 	// Incorrect Password
 	err := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil {
-		msg = "Wrond Password"
+		msg = "Wrong Password"
 		return msg, models.Account{}, errors.New("")
 	}
 
@@ -170,7 +170,7 @@ func Login(username, password string, is_admin bool, db *gorm.DB) (string, model
 			return msg, models.Account{}, errors.New("")
 		}
 	}
-	//Account isn't active
+	// Account isn't active
 	if !account.IsActive {
 		msg = "Your Account Isn't Active"
 		return msg, models.Account{}, errors.New("")

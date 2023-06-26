@@ -1,12 +1,15 @@
 package utils
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 func GenerateRegex(word string) string {
 	word = strings.ToLower(word)
 	letterReplacement := make(map[string][]string)
 	for i := 97; i <= 122; i++ {
-		letterReplacement[string(i)] = make([]string, 0)
+		letterReplacement[strconv.Itoa(i)] = make([]string, 0)
 	}
 	letterReplacement["a"] = append(letterReplacement["a"], "A", "a", "@", "^", "4")
 	letterReplacement["b"] = append(letterReplacement["b"], "B", "b", "8", "ß")
@@ -33,7 +36,7 @@ func GenerateRegex(word string) string {
 	letterReplacement["w"] = append(letterReplacement["w"], "W", "w", "₩")
 	letterReplacement["x"] = append(letterReplacement["x"], "X", "x", "%")
 	letterReplacement["y"] = append(letterReplacement["y"], "Y", "y", "¥", "γ")
-	letterReplacement["z"] = append(letterReplacement["t"], "Z", "z", "2")
+	letterReplacement["z"] = append(letterReplacement["z"], "Z", "z", "2")
 
 	reg := ""
 	for i, l := range word {
@@ -47,5 +50,4 @@ func GenerateRegex(word string) string {
 		}
 	}
 	return reg
-
 }

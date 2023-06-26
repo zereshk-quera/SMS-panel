@@ -1,11 +1,12 @@
 package test
 
 import (
+	"os"
+	"testing"
+
 	database "SMS-panel/database"
 	"SMS-panel/handlers"
 	"SMS-panel/models"
-	"os"
-	"testing"
 
 	"github.com/labstack/echo/v4"
 )
@@ -40,7 +41,6 @@ func TestMain(m *testing.M) {
 }
 
 func createTestData() error {
-
 	db, err := database.GetConnection()
 	if err != nil {
 		return err

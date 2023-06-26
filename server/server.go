@@ -26,24 +26,22 @@ func StartServer() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// Account
-	accountHandler := handlers.NewAccountHandler(db)
-	accountRoutes(e, accountHandler)
-
+	// accountHandler := handlers.NewAccountHandler(db)
+	// accountRoutes(e, accountHandler)
+	accountRoutes(e)
 	// Payment
 	paymentRoutes(e)
 
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)
-	
+
 	// SMS
 	smsHandler := handlers.NewSmsPhoneBookHandler(db)
 	smsRouter(e, smsHandler)
 
-
-	//Admin
+	// Admin
 	adminRoutes(e)
-
 
 	log.Fatal(e.Start(":8080"))
 }

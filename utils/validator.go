@@ -1,13 +1,14 @@
 package utils
 
 import (
-	"errors"
-	"SMS-panel/models"
 	"context"
+	"errors"
 	"net/mail"
 	"strconv"
 	"strings"
 	"time"
+
+	"SMS-panel/models"
 
 	"gorm.io/gorm"
 )
@@ -34,7 +35,7 @@ func ValidatePhone(phone string) bool {
 }
 
 // This Function Parse Input String to Integer on Input Base.
-func parseInt(s string, base int) int {
+func ParseInt(s string, base int) int {
 	n, err := strconv.ParseInt(s, base, 64)
 	if err != nil {
 		return 0
@@ -46,19 +47,19 @@ func parseInt(s string, base int) int {
 func ValidateNationalID(id string) bool {
 	l := len(id)
 
-	if l < 8 || parseInt(id, 10) == 0 {
+	if l < 8 || ParseInt(id, 10) == 0 {
 		return false
 	}
 
 	id = ("0000" + id)[l+4-10:]
-	if parseInt(id[3:9], 10) == 0 {
+	if ParseInt(id[3:9], 10) == 0 {
 		return false
 	}
 
-	c := parseInt(id[9:10], 10)
+	c := ParseInt(id[9:10], 10)
 	s := 0
 	for i := 0; i < 9; i++ {
-		s += parseInt(id[i:i+1], 10) * (10 - i)
+		s += ParseInt(id[i:i+1], 10) * (10 - i)
 	}
 	s = s % 11
 
