@@ -2,9 +2,11 @@ package server
 
 import (
 	"log"
+	"time"
 
 	database "SMS-panel/database"
 	"SMS-panel/handlers"
+	"SMS-panel/tasks"
 
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -22,6 +24,12 @@ func StartServer() {
 		log.Fatal(err)
 	}
 
+	// task scheduler
+	taskSchaduler := tasks.NewTaskScheduler()
+	taskSchaduler.AddTask(tasks.RentNumberTask(), 2*time.Second, 11, 51, 0)
+
+	taskSchaduler.Run()
+
 	// Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
@@ -35,11 +43,10 @@ func StartServer() {
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)
-	
+
 	// SMS
 	smsHandler := handlers.NewSmsPhoneBookHandler(db)
 	smsRouter(e, smsHandler)
-
 
 	log.Fatal(e.Start(":8080"))
 }
