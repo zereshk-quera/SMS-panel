@@ -44,7 +44,6 @@ func StartServer() {
 	//Admin
 	adminRoutes(e)
 
-	smsRouter(e)
 
 	log.Fatal(e.Start(":8080"))
 }
