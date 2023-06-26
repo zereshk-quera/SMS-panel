@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS accounts (
     password VARCHAR(255),
     token VARCHAR(1020),
     is_active boolean,
+    is_admin boolean,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

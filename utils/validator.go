@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"SMS-panel/models"
 	"context"
 	"net/mail"
@@ -67,6 +68,20 @@ func ValidateNationalID(id string) bool {
 func ValidateTimeFormat(timeStr string) bool {
 	_, err := time.Parse("15:04", timeStr)
 	return err == nil
+}
+
+func ValidateJsonFormat(jsonBody map[string]interface{}, fields ...string) (string, error) {
+	msg := "OK"
+	for _, field := range fields {
+		if _, ok := jsonBody[field]; !ok {
+			msg = "Input Json doesn't include " + field
+			break
+		}
+	}
+	if msg != "OK" {
+		return msg, errors.New("")
+	}
+	return msg, nil
 }
 
 // Check if sender number is available
