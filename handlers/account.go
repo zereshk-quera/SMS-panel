@@ -78,12 +78,6 @@ func (a AccountHandler) RegisterHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
-
 	//check user validation
 	userFormatValidationMsg, user, userFormatErr := utils.ValidateUser(jsonBody)
 	if userFormatErr != nil {
