@@ -169,3 +169,32 @@ func TestLoginHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestBudgetAmountHandler(t *testing.T) {
+	// Set up test environment
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/budget", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	// Set up account object
+	account := models.Account{
+		Budget: 100,
+	}
+	ctx.Set("account", account)
+
+	t.Run("ValidRequest", func(t *testing.T) {
+		// Call the handler function
+		err := handlers.BudgetAmountHandler(ctx)
+
+		// Assert that no error occurred
+		assert.NoError(t, err, "Expected no error in BudgetAmountHandler")
+
+		// Assert the response status code
+		assert.Equal(t, http.StatusOK, rec.Code, "Expected status code to be 200")
+
+		// Assert the response body
+		expectedBody := `{"amount":100}`
+		assert.Equal(t, expectedBody, strings.TrimSpace(rec.Body.String()), "Expected response body to match")
+	})
+}
