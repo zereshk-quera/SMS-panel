@@ -8,6 +8,7 @@ import (
 	"SMS-panel/utils"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 // define this structs for swagger docs
