@@ -526,6 +526,15 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get budget amount",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -717,8 +726,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.AccountResponse"
                         }
@@ -744,30 +753,57 @@ const docTemplate = `{
                 }
             }
         },
-        "/accounts/sender_numbers": {
-            "get": {
+        "/sms/periodic-sms": {
+            "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "retrieves All sender numbers available for the account",
+                "description": "Send periodic SMS messages with specified schedule and interval",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "messages"
                 ],
-                "summary": "Get All sender numbers",
+                "summary": "Send periodic SMS messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "SMS message details",
+                        "name": "sendSMSRequestPeriodic",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSRequestPeriodic"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "SMS scheduled successfully",
                         "schema": {
-                            "$ref": "#/definitions/handlers.SenderNumbersResponse"
+                            "type": "string"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "400": {
+                        "description": "Insufficient budget",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -829,7 +865,12 @@ const docTemplate = `{
         },
         "/sms/single-sms": {
             "post": {
-                "description": "Sends a single SMS message and saves the result in the SMSMessage table",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Send a single SMS message",
                 "consumes": [
                     "application/json"
                 ],
@@ -837,20 +878,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SMS"
+                    "messages"
                 ],
-                "summary": "Send Single SMS",
+                "summary": "Send a single SMS message",
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "\"account_token\"",
-                        "description": "account_token",
-                        "name": "Cookie",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
                     {
-                        "description": "Request body for sending an SMS message",
+                        "description": "SMS message details",
                         "name": "sendSMSRequest",
                         "in": "body",
                         "required": true,
@@ -872,8 +912,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponseSingle"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponseSingle"
                         }
@@ -1032,6 +1084,35 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.SendSMSRequestPeriodic": {
+            "type": "object",
+            "required": [
+                "senderNumbers"
+            ],
+            "properties": {
+                "interval": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phone_book_id": {
+                    "type": "string"
+                },
+                "schedule": {
+                    "type": "string"
+                },
+                "senderNumbers": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.SendSMSResponse": {
             "type": "object",
             "properties": {
@@ -1060,17 +1141,6 @@ const docTemplate = `{
                 },
                 "senderNumbers": {
                     "type": "string"
-                }
-            }
-        },
-        "handlers.SenderNumbersResponse": {
-            "type": "object",
-            "properties": {
-                "numbers": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

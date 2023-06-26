@@ -1,11 +1,12 @@
 package db
 
 import (
-	"SMS-panel/models"
 	"errors"
 	"fmt"
 	"os"
 	"time"
+
+	"SMS-panel/models"
 
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
@@ -24,7 +25,7 @@ func Connect() error {
 
 	// If not connect - use "db" instead of "localhost"
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		"localhost", "postgres", "root", "test", "5432", "disable", "Asia/Tehran")
+		"localhost", "amirhejazi", "postgres", "sms_panel", "5433", "disable", "Asia/Tehran")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
@@ -43,11 +44,11 @@ func GetConnection() (*gorm.DB, error) {
 			return nil, errors.New("database connection is not initialized")
 		}
 	}
-	//check super admin existence
+	// check super admin existence
 	var account models.Account
 	dbConn.Where("id = ?", 1).First(&account)
 
-	//initial super admin
+	// initial super admin
 	if account.ID == 0 {
 		var user models.User
 		user.FirstName = "admin"
@@ -62,7 +63,7 @@ func GetConnection() (*gorm.DB, error) {
 		adminAccount.IsActive = true
 		adminAccount.IsAdmin = true
 		adminAccount.Username = "admin"
-		//save hashed password
+		// save hashed password
 		hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 		adminAccount.Password = string(hash)
 		// Generate Token

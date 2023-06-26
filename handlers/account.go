@@ -134,9 +134,10 @@ func LoginHandler(c echo.Context, db *gorm.DB) error {
 // @Tags users
 // @Security ApiKeyAuth
 // @Produce json
+// @Param Authorization header string true "User Token"  // Updated parameter name to "Authorization"
 // @Success 200 {object} BudgetAmountResponse
 // @Failure 401 {string} string
-// @Router /accounts/budget	 [get]
+// @Router /accounts/budget [get]
 func BudgetAmountHandler(c echo.Context) error {
 	// Recieve Account Object
 	account := c.Get("account")
@@ -145,9 +146,7 @@ func BudgetAmountHandler(c echo.Context) error {
 	budget := int(account.(models.Account).Budget)
 
 	// Create Result Object
-	res := struct {
-		Amount int `json:"amount"`
-	}{
+	res := BudgetAmountResponse{
 		Amount: budget,
 	}
 	return c.JSON(http.StatusOK, res)

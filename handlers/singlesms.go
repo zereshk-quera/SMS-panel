@@ -27,17 +27,20 @@ type ErrorResponseSingle struct {
 	Message string `json:"message"`
 }
 
-// SendSingleSMSHandler sends a single SMS message and saves the result in the SMSMessage table.
-// @Summary Send Single SMS
-// @Description Sends a single SMS message and saves the result in the SMSMessage table
-// @Tags SMS
+// SendSingleSMSHandler sends a single SMS message
+// @Summary Send a single SMS message
+// @Description Send a single SMS message
+// @Tags messages
+// @Security ApiKeyAuth
 // @Accept json
 // @Produce json
-// @Param Cookie header string true "account_token" default("account_token")
-// @Param sendSMSRequest body SendSMSRequest true "Request body for sending an SMS message"
+// @Param Authorization header string true "Authorization Token"
+// @Param sendSMSRequest body SendSMSRequest true "SMS message details"
 // @Success 200 {object} SendSMSResponse
 // @Failure 400 {object} ErrorResponseSingle
+// @Failure 401 {string} string
 // @Failure 403 {object} ErrorResponseSingle
+// @Failure 404 {object} ErrorResponseSingle
 // @Failure 500 {object} ErrorResponseSingle
 // @Router /sms/single-sms [post]
 func SendSingleSMSHandler(c echo.Context) error {
@@ -154,7 +157,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		Source:      account.Username,
 		Destination: destination,
 	})
-
 	if err != nil {
 		tx.Rollback()
 		errResponse := ErrorResponseSingle{
