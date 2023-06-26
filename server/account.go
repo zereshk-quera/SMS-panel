@@ -5,6 +5,7 @@ import (
 
 	database "SMS-panel/database"
 	"SMS-panel/handlers"
+	"SMS-panel/middlewares"
 	"SMS-panel/models"
 
 	"github.com/labstack/echo/v4"
@@ -24,5 +25,5 @@ func withDBConnection(handlerFunc func(c echo.Context, db *gorm.DB) error) echo.
 func accountRoutes(e *echo.Echo) {
 	e.POST("/accounts/login", withDBConnection(handlers.LoginHandler))
 	e.POST("/accounts/register", withDBConnection(handlers.RegisterHandler))
-	// e.GET("/accounts/budget", withDBConnection(handlers.BudgetAmountHandler), middlewares.IsLoggedIn)
+	e.GET("/accounts/budget", handlers.BudgetAmountHandler, middlewares.IsLoggedIn)
 }
