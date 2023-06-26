@@ -53,7 +53,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
 
-	if !utils.ValidatePhone(reqBody.PhoneNumber) {
+	if reqBody.PhoneNumber != "" && !utils.ValidatePhone(reqBody.PhoneNumber) {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid phone number",
@@ -107,6 +107,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 
 	var phoneNumber models.PhoneBookNumber
 	var message string
+	var destination string
 
 	if reqBody.Username != "" {
 		if err := tx.
@@ -115,7 +116,9 @@ func SendSingleSMSHandler(c echo.Context) error {
 			First(&phoneNumber).Error; err != nil {
 			phoneNumber = models.PhoneBookNumber{}
 		}
+
 		message = CreateSMSTemplate(reqBody.Message, phoneNumber)
+		destination = phoneNumber.Phone
 
 		if phoneNumber.ID == 0 {
 			tx.Rollback()
@@ -132,7 +135,9 @@ func SendSingleSMSHandler(c echo.Context) error {
 			First(&phoneNumber).Error; err != nil {
 			phoneNumber = models.PhoneBookNumber{}
 		}
+
 		message = CreateSMSTemplate(reqBody.Message, phoneNumber)
+		destination = phoneNumber.Phone
 
 		if phoneNumber.ID == 0 {
 			tx.Rollback()
@@ -147,8 +152,9 @@ func SendSingleSMSHandler(c echo.Context) error {
 	deliveryReport, err := MockSendMessage(&Message{
 		Text:        message,
 		Source:      account.Username,
-		Destination: reqBody.PhoneNumber,
+		Destination: destination,
 	})
+
 	if err != nil {
 		tx.Rollback()
 		errResponse := ErrorResponseSingle{

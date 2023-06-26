@@ -27,17 +27,6 @@ definitions:
       amount:
         type: integer
     type: object
-  handlers.CreatePhoneBookNumberRequest:
-    properties:
-      name:
-        type: string
-      phone:
-        type: string
-      phoneBookID:
-        type: integer
-      prefix:
-        type: string
-    type: object
   handlers.ErrorResponse:
     properties:
       message:
@@ -413,7 +402,7 @@ paths:
         name: phoneBookNumber
         required: true
         schema:
-          $ref: '#/definitions/handlers.CreatePhoneBookNumberRequest'
+          $ref: '#/definitions/models.PhoneBookNumber'
       produces:
       - application/json
       responses:
@@ -645,6 +634,40 @@ paths:
       tags:
       - payment
   /accounts/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided information
+      parameters:
+      - description: User registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Register a new user
+      tags:
+      - users
+  /sms/single-sms:
     post:
       consumes:
       - application/json
