@@ -744,6 +744,89 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/sender_numbers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "retrieves All sender numbers available for the account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get All sender numbers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SenderNumbersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/sms/phonebooks": {
+            "post": {
+                "description": "Send sms to phone books numbers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SMS"
+                ],
+                "summary": "Send sms to phone books numbers",
+                "parameters": [
+                    {
+                        "description": "Phone books sms details.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMessageToPhoneBooksBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSResponse"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sms/single-sms": {
             "post": {
                 "description": "Sends a single SMS message and saves the result in the SMSMessage table",
@@ -928,6 +1011,9 @@ const docTemplate = `{
         },
         "handlers.SendSMSRequest": {
             "type": "object",
+            "required": [
+                "senderNumbers"
+            ],
             "properties": {
                 "message": {
                     "type": "string",
@@ -936,6 +1022,9 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string",
                     "example": "1234567890"
+                },
+                "senderNumbers": {
+                    "type": "string"
                 },
                 "username": {
                     "type": "string",
@@ -949,6 +1038,39 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "SMS sent successfully"
+                }
+            }
+        },
+        "handlers.SendSMessageToPhoneBooksBody": {
+            "type": "object",
+            "required": [
+                "message",
+                "phoneBooks",
+                "senderNumbers"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "phoneBooks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "senderNumbers": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.SenderNumbersResponse": {
+            "type": "object",
+            "properties": {
+                "numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
