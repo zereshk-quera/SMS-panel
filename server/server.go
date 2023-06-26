@@ -26,7 +26,7 @@ func StartServer() {
 
 	// task scheduler
 	taskSchaduler := tasks.NewTaskScheduler()
-	taskSchaduler.AddTask(tasks.RentNumberTask(), 2*time.Second, 11, 51, 0)
+	taskSchaduler.AddTask(tasks.RentNumberTask(db), 10*time.Second, 11, 51, 0)
 
 	taskSchaduler.Run()
 
