@@ -1,22 +1,16 @@
 package handlers
 
 import (
+	"SMS-panel/models"
+	"SMS-panel/utils"
 	"errors"
 	"net/http"
 
-	database "SMS-panel/database"
-	"SMS-panel/models"
-
 	echo "github.com/labstack/echo/v4"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-type CreatePhoneBookNumberRequest struct {
-	PhoneBookID uint   `json:"phoneBookID"`
-	Prefix      string `json:"prefix"`
-	Name        string `json:"name"`
-	Phone       string `json:"phone"`
-}
 type UpdatePhoneBookNumberRequest struct {
 	Prefix string `json:"prefix"`
 	Name   string `json:"name"`
@@ -29,30 +23,43 @@ type UpdatePhoneBookNumberRequest struct {
 // @Tags PhoneBookNumbers
 // @Accept json
 // @Produce json
-// @Param phoneBookNumber body CreatePhoneBookNumberRequest true "Phone book number object"
+// @Param phoneBookNumber body models.PhoneBookNumber true "Phone book number object"
 // @Success 201 {object} models.PhoneBookNumber
 // @Failure 400 {string} string
 // @Failure 500 {string} string
 // @Router /account/phone-books/phone-book-numbers [post]
-func CreatePhoneBookNumber(c echo.Context) error {
-	var request CreatePhoneBookNumberRequest
-	if err := c.Bind(&request); err != nil {
+func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
+	phoneBookNumber := models.PhoneBookNumber{}
+
+	if err := c.Bind(&phoneBookNumber); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-
-	phoneBookNumber := models.PhoneBookNumber{
-		PhoneBookID: request.PhoneBookID,
-		Prefix:      request.Prefix,
-		Name:        request.Name,
-		Phone:       request.Phone,
+	if phoneBookNumber.Name == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Name is required"})
 	}
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+	if phoneBookNumber.Phone == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Phone is required"})
 	}
 
-	result := db.Create(&phoneBookNumber)
+	// Check Phone Number Validation
+	if !utils.ValidatePhone(phoneBookNumber.Phone) {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Invalid Phone Number"})
+	}
+
+	// Is Input Phone Number Unique or Not
+	var existingPhoneBookNumber models.PhoneBookNumber
+	p.db.Where("phone = ? AND prefix = ?", phoneBookNumber.Phone, phoneBookNumber.Prefix).First(&existingPhoneBookNumber)
+	if existingPhoneBookNumber.ID != 0 {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Inupt Phone Number has already been registered"})
+	}
+
+	p.db.Where("username = ?", phoneBookNumber.Username).First(&existingPhoneBookNumber)
+	if existingPhoneBookNumber.ID != 0 {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Inupt Username has already been registered"})
+	}
+
+	result := p.db.Create(&phoneBookNumber)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -71,19 +78,14 @@ func CreatePhoneBookNumber(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /account/phone-books/{phoneBookID}/phone-book-numbers [get]
-func ListPhoneBookNumbers(c echo.Context) error {
+func (p *PhonebookHandler) ListPhoneBookNumbers(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var phoneBookNumbers []models.PhoneBookNumber
-	result := db.Where("phone_book_id = ?", phoneBookID).Find(&phoneBookNumbers)
+	result := p.db.Where("phone_book_id = ?", phoneBookID).Find(&phoneBookNumbers)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return c.JSON(http.StatusNotFound, "Phone book not found")
+			return c.JSON(http.StatusNotFound, "Phonebook not found")
 		}
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -102,16 +104,11 @@ func ListPhoneBookNumbers(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /account/phone-books/phone-book-numbers/{phoneBookNumberID} [get]
-func ReadPhoneBookNumber(c echo.Context) error {
+func (p *PhonebookHandler) ReadPhoneBookNumber(c echo.Context) error {
 	phoneBookNumberID := c.Param("phoneBookNumberID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var phoneBookNumber models.PhoneBookNumber
-	result := db.First(&phoneBookNumber, phoneBookNumberID)
+	result := p.db.First(&phoneBookNumber, phoneBookNumberID)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phone book number not found")
@@ -135,16 +132,11 @@ func ReadPhoneBookNumber(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /account/phone-books/phone-book-numbers/{phoneBookNumberID} [put]
-func UpdatePhoneBookNumber(c echo.Context) error {
+func (p *PhonebookHandler) UpdatePhoneBookNumber(c echo.Context) error {
 	phoneBookNumberID := c.Param("phoneBookNumberID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var existingPhoneBookNumber models.PhoneBookNumber
-	result := db.First(&existingPhoneBookNumber, phoneBookNumberID)
+	result := p.db.First(&existingPhoneBookNumber, phoneBookNumberID)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phone book number not found")
@@ -152,17 +144,26 @@ func UpdatePhoneBookNumber(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
 
-	var updatedPhoneBookNumber models.PhoneBookNumber
+	var updatedPhoneBookNumber UpdatePhoneBookNumberRequest
 	if err := c.Bind(&updatedPhoneBookNumber); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	// Update the fields of the existing phone book number
-	existingPhoneBookNumber.Prefix = updatedPhoneBookNumber.Prefix
-	existingPhoneBookNumber.Name = updatedPhoneBookNumber.Name
-	existingPhoneBookNumber.Phone = updatedPhoneBookNumber.Phone
+	if updatedPhoneBookNumber.Prefix != "" {
+		existingPhoneBookNumber.Prefix = updatedPhoneBookNumber.Prefix
+	}
+	if updatedPhoneBookNumber.Name != "" {
+		existingPhoneBookNumber.Name = updatedPhoneBookNumber.Name
+	}
+	if updatedPhoneBookNumber.Phone != "" {
+		existingPhoneBookNumber.Phone = updatedPhoneBookNumber.Phone
+	}
 
-	result = db.Save(&existingPhoneBookNumber)
+	// Use the `clause.OnConflict` to avoid updating the primary key
+	result = p.db.Clauses(clause.OnConflict{
+		DoNothing: true,
+	}).Save(&existingPhoneBookNumber)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -181,16 +182,11 @@ func UpdatePhoneBookNumber(c echo.Context) error {
 // @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /account/phone-books/phone-book-numbers/{phoneBookNumberID} [delete]
-func DeletePhoneBookNumber(c echo.Context) error {
+func (p *PhonebookHandler) DeletePhoneBookNumber(c echo.Context) error {
 	phoneBookNumberID := c.Param("phoneBookNumberID")
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
 	var phoneBookNumber models.PhoneBookNumber
-	result := db.First(&phoneBookNumber, phoneBookNumberID)
+	result := p.db.First(&phoneBookNumber, phoneBookNumberID)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phone book number not found")
@@ -198,7 +194,7 @@ func DeletePhoneBookNumber(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
 
-	result = db.Delete(&phoneBookNumber)
+	result = p.db.Delete(&phoneBookNumber)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
@@ -42,18 +41,30 @@ type BudgetAmountResponse struct {
 	Amount int `json:"amount"`
 }
 
+type SenderNumbersResponse struct {
+	Numbers []string `json:"numbers"`
+}
+
+type AccountHandler struct {
+	db *gorm.DB
+}
+
+func NewAccountHandler(db *gorm.DB) *AccountHandler {
+	return &AccountHandler{db: db}
+}
+
 // @Summary Register a new user
 // @Description Register a new user with the provided information
 // @Tags users
 // @Accept json
 // @Produce json
 // @Param body body UserCreateRequest true "User registration details"
-// @Success 200 {object} AccountResponse
+// @Success 201 {object} AccountResponse
 // @Failure 400 {object} ErrorResponseRegisterLogin
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Failure 500 {object} ErrorResponseRegisterLogin
 // @Router /accounts/register [post]
-func RegisterHandler(c echo.Context) error {
+func (a AccountHandler) RegisterHandler(c echo.Context) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -80,19 +91,19 @@ func RegisterHandler(c echo.Context) error {
 	}
 
 	//check unique
-	userUniqueMsg, userUniqueErr := utils.CheckUnique(user, jsonBody["username"].(string), db)
+	userUniqueMsg, userUniqueErr := utils.CheckUnique(user, jsonBody["username"].(string), a.db)
 	if userUniqueErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: userUniqueMsg})
 	}
 
 	// Insert User Object Into Database
-	createdUser := db.Create(&user)
+	createdUser := a.db.Create(&user)
 	if createdUser.Error != nil {
 		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "User Cration Failed"})
 	}
 
 	//create account
-	accountCreationMsg, account, accountCreationErr := utils.CreateAccount(int(user.ID), jsonBody["username"].(string), false, jsonBody["password"].(string), db)
+	accountCreationMsg, account, accountCreationErr := utils.CreateAccount(int(user.ID), jsonBody["username"].(string), false, jsonBody["password"].(string), a.db)
 	if accountCreationErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: accountCreationMsg})
 	}
@@ -111,7 +122,7 @@ func RegisterHandler(c echo.Context) error {
 // @Failure 400 {object} ErrorResponseRegisterLogin
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Router  /accounts/login [post]
-func LoginHandler(c echo.Context) error {
+func (a AccountHandler) LoginHandler(c echo.Context) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -125,14 +136,8 @@ func LoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	//get database connection
-	db, err := database.GetConnection()
-	if err != nil {
-		return err
-	}
-
 	//find account based on username and check password correction
-	findAccountMsg, account, findAccountErr := utils.Login(jsonBody["username"].(string), jsonBody["password"].(string), false, db)
+	findAccountMsg, account, findAccountErr := utils.Login(jsonBody["username"].(string), jsonBody["password"].(string), false, a.db)
 	if findAccountErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: findAccountMsg})
 	}
@@ -149,7 +154,7 @@ func LoginHandler(c echo.Context) error {
 // @Success 200 {object} BudgetAmountResponse
 // @Failure 401 {string} string
 // @Router /accounts/budget	 [get]
-func BudgetAmountHandler(c echo.Context) error {
+func (a AccountHandler) BudgetAmountHandler(c echo.Context) error {
 	// Recieve Account Object
 	account := c.Get("account")
 
@@ -163,4 +168,36 @@ func BudgetAmountHandler(c echo.Context) error {
 		Amount: budget,
 	}
 	return c.JSON(http.StatusOK, res)
+}
+
+// GetAllSenderNumbersHandler retrieves All sender numbers available for the account
+// @Summary Get All sender numbers
+// @Description retrieves All sender numbers available for the account
+// @Tags users
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 200 {object} SenderNumbersResponse
+// @Failure 401 {string} string
+// @Router /accounts/sender_numbers	 [get]
+func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
+	account := c.Get("account").(models.Account)
+
+	var senderNumbersObjects []models.SenderNumber
+
+	err := a.db.Model(&models.SenderNumber{}).
+		Select("sender_numbers.number").
+		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
+		Where("sender_numbers.is_default=true or (user_numbers.user_id = ? and user_numbers.is_available=true)",
+			account.UserID).
+		Scan(&senderNumbersObjects).Error
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+	var senderNumbers []string
+	for _, n := range senderNumbersObjects {
+		senderNumbers = append(senderNumbers, n.Number)
+	}
+
+	return c.JSON(http.StatusOK, SenderNumbersResponse{Numbers: senderNumbers})
+
 }

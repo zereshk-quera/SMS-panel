@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -17,15 +16,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
-)
-
-var (
-	account          models.Account
-	phoneBookID      uint
-	e                *echo.Echo
-	db               *gorm.DB
-	phonebookHandler *handlers.PhonebookHandler
 )
 
 func init() {
@@ -38,98 +28,6 @@ func init() {
 	phonebookHandler = handlers.NewPhonebookHandler(db)
 }
 
-func TestMain(m *testing.M) {
-	err := database.Connect()
-	if err != nil {
-		panic("failed to connect to the database: " + err.Error())
-	}
-	/*
-		err = cleanupTestData()
-		if err != nil {
-			panic("failed to cleanup test data: " + err.Error())
-		}
-	*/
-
-	err = createTestData()
-	if err != nil {
-		panic("failed to create test data: " + err.Error())
-	}
-
-	err = cleanupTestData()
-	if err != nil {
-		panic("failed to cleanup test data: " + err.Error())
-	}
-
-	code := m.Run()
-
-	os.Exit(code)
-}
-
-func createTestData() error {
-	user := models.User{
-		FirstName:  "John",
-		LastName:   "Doe",
-		Phone:      "123456789",
-		Email:      "john.doe@example.com",
-		NationalID: "1234567890",
-	}
-	db, err := database.GetConnection()
-	if err != nil {
-		return err
-	}
-	err = db.Create(&user).Error
-	if err != nil {
-		return err
-	}
-
-	account = models.Account{
-		UserID:   user.ID,
-		Username: "johndoe",
-		Budget:   1000,
-		Password: "password",
-	}
-	err = db.Create(&account).Error
-	if err != nil {
-		return err
-	}
-
-	phoneBook := models.PhoneBook{
-		AccountID: account.ID,
-		Name:      "John Doe",
-	}
-	err = db.Create(&phoneBook).Error
-	if err != nil {
-		return err
-	}
-
-	phoneBookID = phoneBook.ID
-
-	return nil
-}
-
-func cleanupTestData() error {
-	db, err := database.GetConnection()
-	if err != nil {
-		return err
-	}
-
-	err = db.Exec("DELETE FROM phone_books WHERE account_id = ?", account.ID).Error
-	if err != nil {
-		return err
-	}
-
-	err = db.Exec("DELETE FROM accounts WHERE id = ?", account.ID).Error
-	if err != nil {
-		return err
-	}
-	err = db.Exec("DELETE FROM users WHERE id = ?", account.UserID).Error
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func TestCreatePhoneBook(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		phoneBookReq := handlers.PhoneBookRequest{
@@ -140,7 +38,7 @@ func TestCreatePhoneBook(t *testing.T) {
 		reqBody, err := json.Marshal(phoneBookReq)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodPost, "/phonebook", bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPost, "/account/phone-books/", bytes.NewReader(reqBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -166,7 +64,7 @@ func TestCreatePhoneBook(t *testing.T) {
 		reqBody, err := json.Marshal(phoneBookReq)
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodPost, "/phonebook", bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPost, "/account/phone-books/", bytes.NewReader(reqBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -186,7 +84,7 @@ func TestCreatePhoneBook(t *testing.T) {
 
 func TestGetAllPhoneBooks(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/phonebooks/"+fmt.Sprint(account.ID), nil)
+		req := httptest.NewRequest(http.MethodGet, "/account/phone-books/"+fmt.Sprint(account.ID), nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetParamNames("accountID")

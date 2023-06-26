@@ -12,9 +12,10 @@ import (
 )
 
 type SendSMSRequest struct {
-	PhoneNumber string `json:"phone_number" example:"1234567890"`
-	Message     string `json:"message" example:"Hello, World!"`
-	Username    string `json:"username" example:"johndoe"`
+	SenderNumber string `json:"senderNumbers" binding:"required"`
+	PhoneNumber  string `json:"phone_number" example:"1234567890"`
+	Message      string `json:"message" example:"Hello, World!"`
+	Username     string `json:"username" example:"johndoe"`
 }
 
 type SendSMSResponse struct {
@@ -41,6 +42,7 @@ type ErrorResponseSingle struct {
 // @Router /sms/single-sms [post]
 func SendSingleSMSHandler(c echo.Context) error {
 	account := c.Get("account").(models.Account)
+	ctx := c.Request().Context()
 
 	reqBody := new(SendSMSRequest)
 	if err := c.Bind(reqBody); err != nil {
@@ -51,7 +53,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
 
-	if !utils.ValidatePhone(reqBody.PhoneNumber) {
+	if reqBody.PhoneNumber != "" && !utils.ValidatePhone(reqBody.PhoneNumber) {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid phone number",
@@ -64,6 +66,18 @@ func SendSingleSMSHandler(c echo.Context) error {
 		errResponse := ErrorResponseSingle{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, errResponse)
+	}
+
+	// Check if sender number is available
+	senderNumberExisted := utils.IsSenderNumberExist(
+		ctx, db, reqBody.SenderNumber, account.UserID,
+	)
+	if !senderNumberExisted {
+		errResponse := ErrorResponseSingle{
+			Code:    http.StatusNotFound,
+			Message: "Sender number not found!",
 		}
 		return c.JSON(http.StatusInternalServerError, errResponse)
 	}
@@ -93,6 +107,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 
 	var phoneNumber models.PhoneBookNumber
 	var message string
+	var destination string
 
 	if reqBody.Username != "" {
 		if err := tx.
@@ -101,7 +116,9 @@ func SendSingleSMSHandler(c echo.Context) error {
 			First(&phoneNumber).Error; err != nil {
 			phoneNumber = models.PhoneBookNumber{}
 		}
+
 		message = CreateSMSTemplate(reqBody.Message, phoneNumber)
+		destination = phoneNumber.Phone
 
 		if phoneNumber.ID == 0 {
 			tx.Rollback()
@@ -118,7 +135,9 @@ func SendSingleSMSHandler(c echo.Context) error {
 			First(&phoneNumber).Error; err != nil {
 			phoneNumber = models.PhoneBookNumber{}
 		}
+
 		message = CreateSMSTemplate(reqBody.Message, phoneNumber)
+		destination = phoneNumber.Phone
 
 		if phoneNumber.ID == 0 {
 			tx.Rollback()
@@ -133,8 +152,9 @@ func SendSingleSMSHandler(c echo.Context) error {
 	deliveryReport, err := MockSendMessage(&Message{
 		Text:        message,
 		Source:      account.Username,
-		Destination: reqBody.PhoneNumber,
+		Destination: destination,
 	})
+
 	if err != nil {
 		tx.Rollback()
 		errResponse := ErrorResponseSingle{
@@ -145,7 +165,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 	}
 
 	sms := models.SMSMessage{
-		Sender:         account.Username,
+		Sender:         reqBody.SenderNumber,
 		Recipient:      reqBody.PhoneNumber,
 		Message:        message,
 		Schedule:       nil,

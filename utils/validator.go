@@ -2,10 +2,14 @@ package utils
 
 import (
 	"errors"
+	"SMS-panel/models"
+	"context"
 	"net/mail"
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // This Function Validates Input Email.
@@ -78,4 +82,24 @@ func ValidateJsonFormat(jsonBody map[string]interface{}, fields ...string) (stri
 		return msg, errors.New("")
 	}
 	return msg, nil
+}
+
+// Check if sender number is available
+func IsSenderNumberExist(
+	ctx context.Context,
+	db *gorm.DB,
+	senderNumber string,
+	userId uint,
+) bool {
+	var senderNumbersObjects models.SenderNumber
+
+	err := db.WithContext(ctx).Model(&models.SenderNumber{}).
+		Select("sender_numbers.number").
+		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
+		Where(
+			"(sender_numbers.is_default=true or (user_numbers.user_id = ? and user_numbers.is_available=true)) and sender_numbers.number = ?",
+			userId, senderNumber).
+		First(&senderNumbersObjects).Error
+
+	return err == nil
 }

@@ -1,9 +1,10 @@
 package server
 
 import (
+	"log"
+
 	database "SMS-panel/database"
 	"SMS-panel/handlers"
-	"log"
 
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -25,11 +26,20 @@ func StartServer() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// Account
-	accountRoutes(e)
+	accountHandler := handlers.NewAccountHandler(db)
+	accountRoutes(e, accountHandler)
+
+	// Payment
+	paymentRoutes(e)
 
 	// Phonebook
 	phonebookHandler := handlers.NewPhonebookHandler(db)
 	phonebookRoutes(e, phonebookHandler)
+	
+	// SMS
+	smsHandler := handlers.NewSmsPhoneBookHandler(db)
+	smsRouter(e, smsHandler)
+
 
 	//Admin
 	adminRoutes(e)

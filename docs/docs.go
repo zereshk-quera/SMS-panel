@@ -24,6 +24,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/account/phone-books/": {
+            "post": {
+                "description": "Create a new phone book entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "phonebook"
+                ],
+                "summary": "Create a phone book entry",
+                "parameters": [
+                    {
+                        "description": "Phone book entry data",
+                        "name": "phoneBook",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PhoneBookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PhoneBookResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/account/phone-books/phone-book-numbers": {
             "post": {
                 "description": "Create a new phone book number",
@@ -44,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreatePhoneBookNumberRequest"
+                            "$ref": "#/definitions/models.PhoneBookNumber"
                         }
                     }
                 ],
@@ -542,6 +588,110 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/payment/request": {
+            "post": {
+                "description": "Zarinpal Payment to add budget to account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Add budget request",
+                "parameters": [
+                    {
+                        "description": "Payment request details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AmountFee"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RequestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/payment/verify": {
+            "get": {
+                "description": "Verify Zarinpal Payment to add budget to account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Verify budget payment and add budget",
+                "parameters": [
+                    {
+                        "description": "Payment verify details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.VerifyResponse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/accounts/register": {
             "post": {
                 "description": "Register a new user with the provided information",
@@ -567,8 +717,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/handlers.AccountResponse"
                         }
@@ -594,9 +744,40 @@ const docTemplate = `{
                 }
             }
         },
-        "/phonebook": {
+        "/accounts/sender_numbers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "retrieves All sender numbers available for the account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get All sender numbers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SenderNumbersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/sms/phonebooks": {
             "post": {
-                "description": "Create a new phone book entry",
+                "description": "Send sms to phone books numbers",
                 "consumes": [
                     "application/json"
                 ],
@@ -604,17 +785,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "phonebook"
+                    "SMS"
                 ],
-                "summary": "Create a phone book entry",
+                "summary": "Send sms to phone books numbers",
                 "parameters": [
                     {
-                        "description": "Phone book entry data",
-                        "name": "phoneBook",
+                        "description": "Phone books sms details.",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.PhoneBookRequest"
+                            "$ref": "#/definitions/handlers.SendSMessageToPhoneBooksBody"
                         }
                     }
                 ],
@@ -622,7 +803,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.PhoneBookResponse"
+                            "$ref": "#/definitions/handlers.SendSMSResponse"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "400": {
@@ -635,6 +822,66 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sms/single-sms": {
+            "post": {
+                "description": "Sends a single SMS message and saves the result in the SMSMessage table",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SMS"
+                ],
+                "summary": "Send Single SMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "\"account_token\"",
+                        "description": "account_token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body for sending an SMS message",
+                        "name": "sendSMSRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SendSMSResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponseSingle"
                         }
                     }
                 }
@@ -668,28 +915,19 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.AmountFee": {
+            "type": "object",
+            "properties": {
+                "fee": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.BudgetAmountResponse": {
             "type": "object",
             "properties": {
                 "amount": {
                     "type": "integer"
-                }
-            }
-        },
-        "handlers.CreatePhoneBookNumberRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "phoneBookID": {
-                    "type": "integer"
-                },
-                "prefix": {
-                    "type": "string"
                 }
             }
         },
@@ -709,6 +947,17 @@ const docTemplate = `{
                 },
                 "responsecode": {
                     "type": "integer"
+                }
+            }
+        },
+        "handlers.ErrorResponseSingle": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
                 }
             }
         },
@@ -752,6 +1001,79 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.RequestResponse": {
+            "type": "object",
+            "properties": {
+                "payment_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.SendSMSRequest": {
+            "type": "object",
+            "required": [
+                "senderNumbers"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Hello, World!"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "1234567890"
+                },
+                "senderNumbers": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "johndoe"
+                }
+            }
+        },
+        "handlers.SendSMSResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "SMS sent successfully"
+                }
+            }
+        },
+        "handlers.SendSMessageToPhoneBooksBody": {
+            "type": "object",
+            "required": [
+                "message",
+                "phoneBooks",
+                "senderNumbers"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "phoneBooks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "senderNumbers": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.SenderNumbersResponse": {
+            "type": "object",
+            "properties": {
+                "numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "handlers.UpdatePhoneBookNumberRequest": {
             "type": "object",
             "properties": {
@@ -792,6 +1114,31 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.VerifyResponse": {
+            "type": "object",
+            "properties": {
+                "Authority": {
+                    "type": "string"
+                },
+                "Status": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PhoneBook": {
+            "type": "object",
+            "properties": {
+                "accountID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.PhoneBookNumber": {
             "type": "object",
             "properties": {
@@ -804,10 +1151,16 @@ const docTemplate = `{
                 "phone": {
                     "type": "string"
                 },
+                "phoneBook": {
+                    "$ref": "#/definitions/models.PhoneBook"
+                },
                 "phoneBookID": {
                     "type": "integer"
                 },
                 "prefix": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
@@ -822,7 +1175,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "SMS-PANEL",
-	Description:      "Simple SMS-PANEL server",
+	Description:      "Quera SMS-PANEL server",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
