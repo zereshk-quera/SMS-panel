@@ -160,7 +160,7 @@ func Login(username, password string, is_admin bool, db *gorm.DB) (string, model
 	// Incorrect Password
 	err := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil {
-		msg = "Wrond Password"
+		msg = "Wrong Password"
 		return msg, models.Account{}, errors.New("")
 	}
 
