@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func withDBConnection(handlerFunc func(c echo.Context, db *gorm.DB) error) echo.HandlerFunc {
+func WithDBConnection(handlerFunc func(c echo.Context, db *gorm.DB) error) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		dbConn, err := database.GetConnection()
 		if err != nil {
@@ -23,7 +23,7 @@ func withDBConnection(handlerFunc func(c echo.Context, db *gorm.DB) error) echo.
 }
 
 func accountRoutes(e *echo.Echo) {
-	e.POST("/accounts/login", withDBConnection(handlers.LoginHandler))
-	e.POST("/accounts/register", withDBConnection(handlers.RegisterHandler))
+	e.POST("/accounts/login", WithDBConnection(handlers.LoginHandler))
+	e.POST("/accounts/register", WithDBConnection(handlers.RegisterHandler))
 	e.GET("/accounts/budget", handlers.BudgetAmountHandler, middlewares.IsLoggedIn)
 }

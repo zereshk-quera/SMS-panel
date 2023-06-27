@@ -746,6 +746,58 @@
                 }
             }
         },
+        "/admin/register": {
+            "post": {
+                "description": "Register a new admin with the provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Register a new admin",
+                "parameters": [
+                    {
+                        "description": "Admin registration details",
+                        "name": "adminRegistrationRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AdminRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Admin account created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AccountResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Username already exists",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "User creation failed",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Can't connect to the database",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sms/periodic-sms": {
             "post": {
                 "security": [
@@ -956,6 +1008,32 @@
                     "type": "integer"
                 },
                 "Username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.AdminRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "nationalid": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

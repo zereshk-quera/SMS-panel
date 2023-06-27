@@ -17,6 +17,23 @@ definitions:
       Username:
         type: string
     type: object
+  handlers.AdminRegistrationRequest:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      nationalid:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
   handlers.AmountFee:
     properties:
       fee:
@@ -685,6 +702,40 @@ paths:
       summary: Register a new user
       tags:
       - users
+  /admin/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new admin with the provided details
+      parameters:
+      - description: Admin registration details
+        in: body
+        name: adminRegistrationRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AdminRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin account created successfully
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "422":
+          description: Username already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: User creation failed
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "502":
+          description: Can't connect to the database
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Register a new admin
+      tags:
+      - admin
   /sms/periodic-sms:
     post:
       consumes:

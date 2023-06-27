@@ -49,9 +49,9 @@ func createTestData() error {
 	user := models.User{
 		FirstName:  "John",
 		LastName:   "Doe",
-		Phone:      "123456789",
-		Email:      "john.doe@example.com",
-		NationalID: "1234567890",
+		Phone:      "1234567890000",
+		Email:      "john.doe2324354@example.com",
+		NationalID: "12345678901234",
 	}
 	err = db.Create(&user).Error
 	if err != nil {
@@ -60,7 +60,7 @@ func createTestData() error {
 
 	account = models.Account{
 		UserID:   user.ID,
-		Username: "johndoe",
+		Username: "johndoe12342",
 		Budget:   1000,
 		Password: "password",
 	}
