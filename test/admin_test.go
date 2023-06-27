@@ -14,6 +14,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAdminRegisterHandler(t *testing.T) {
@@ -200,5 +201,91 @@ func TestAdminRegisterHandler(t *testing.T) {
 
 		assert.Equal(t, 422, int(response.ResponseCode))
 		assert.Equal(t, "Invalid Phone Number", response.Message)
+	})
+}
+
+func TestAdminLoginHandler(t *testing.T) {
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	e := echo.New()
+	user := models.User{FirstName: "testuser", LastName: "testuser", Phone: "09376304339", Email: "amir@gmail.com", NationalID: "0265670578"}
+	db.Create(&user)
+	hash, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+	assert.NoError(t, err)
+	account := models.Account{UserID: user.ID, Username: "admin", Password: string(hash), Token: "testtoken", IsActive: true, IsAdmin: true}
+	db.Create(&account)
+
+	t.Run("ValidRequest", func(t *testing.T) {
+		requestBody := map[string]interface{}{
+			"username": "admin",
+			"password": "admin123",
+		}
+		assert.NoError(t, err)
+		jsonData, err := json.Marshal(requestBody)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/admin/login", bytes.NewReader(jsonData))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		err = handlers.AdminLoginHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response models.Account
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+	})
+
+	t.Run("InvalidJSON", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/admin/login", bytes.NewReader([]byte("invalid")))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		err = handlers.AdminLoginHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 422, int(response.ResponseCode))
+		assert.Equal(t, "Invalid JSON", response.Message)
+	})
+
+	t.Run("InvalidCredentials", func(t *testing.T) {
+		requestBody := map[string]interface{}{
+			"username": "admin",
+			"password": "wrongpassword",
+		}
+		jsonData, err := json.Marshal(requestBody)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/admin/login", bytes.NewReader(jsonData))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		err = handlers.AdminLoginHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 422, int(response.ResponseCode))
+		assert.Equal(t, "Wrong Password", response.Message)
 	})
 }

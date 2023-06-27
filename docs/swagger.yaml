@@ -702,6 +702,32 @@ paths:
       summary: Register a new user
       tags:
       - users
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in an admin user.
+      parameters:
+      - description: Login Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Admin login
+      tags:
+      - admin
   /admin/register:
     post:
       consumes:

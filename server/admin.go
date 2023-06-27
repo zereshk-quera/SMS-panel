@@ -14,6 +14,6 @@ func adminRoutes(e *echo.Echo) {
 	e.GET("/admin/sms-report", handlers.SmsReportHandler, middlewares.IsAdmin)
 	e.POST("/admin/add-bad-word/:word", handlers.AddBadWordHandler, middlewares.IsAdmin)
 	e.GET("/admin/search/:word", handlers.SmsSearchHandler, middlewares.IsAdmin)
-	e.PATCH("/admin/deactivate/:id", handlers.DeactivateHandler, middlewares.IsAdmin)
+	e.PATCH("/admin/deactivate/:id", WithDBConnection(handlers.DeactivateHandler), middlewares.IsAdmin)
 	e.PATCH("/admin/activate/:id", handlers.ActivateHandler, middlewares.IsAdmin)
 }

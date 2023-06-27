@@ -89,7 +89,16 @@ func AdminRegisterHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, account)
 }
 
-// This Function Used To Activate An Account
+// AdminLoginHandler logs in an admin user.
+// @Summary Admin login
+// @Description Logs in an admin user.
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param body body LoginRequest true "Login Request Body"
+// @Success 200 {object} AccountResponse
+// @Failure 422 {object} ErrorResponseRegisterLogin
+// @Router /admin/login [post]
 func AdminLoginHandler(c echo.Context, db *gorm.DB) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
@@ -113,13 +122,8 @@ func AdminLoginHandler(c echo.Context, db *gorm.DB) error {
 }
 
 // This Function Used To Deactivate An Account
-func DeactivateHandler(c echo.Context) error {
+func DeactivateHandler(c echo.Context, db *gorm.DB) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
 
 	var account models.Account
 
