@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -287,5 +288,109 @@ func TestAdminLoginHandler(t *testing.T) {
 
 		assert.Equal(t, 422, int(response.ResponseCode))
 		assert.Equal(t, "Wrong Password", response.Message)
+	})
+}
+
+func TestDeactivateHandler(t *testing.T) {
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	defer utils.CloseTestDatabase(db)
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
+
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   0,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  true,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
+	testAccount := models.Account{
+		UserID:   user.ID,
+		Username: "testuser2",
+		Budget:   0,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	err = db.Create(&testAccount).Error
+	assert.NoError(t, err)
+
+	t.Run("ValidAccountID", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/admin/deactivate/%d", testAccount.ID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(fmt.Sprintf("%d", testAccount.ID))
+
+		err := handlers.DeactivateHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, int(response.ResponseCode))
+		assert.Equal(t, "This Account Isn't active From Now", response.Message)
+
+		updatedAccount := models.Account{}
+		db.First(&updatedAccount, testAccount.ID)
+		assert.False(t, updatedAccount.IsActive)
+	})
+
+	t.Run("InvalidAccountID", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPatch, "/admin/deactivate/999", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues("999")
+
+		err := handlers.DeactivateHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 422, int(response.ResponseCode))
+		assert.Equal(t, "Invalid Account ID", response.Message)
+	})
+
+	t.Run("SuperAdminAccount", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/admin/deactivate/%d", account.ID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(fmt.Sprintf("%d", account.ID))
+
+		err := handlers.DeactivateHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 400, int(response.ResponseCode))
+		assert.Equal(t, "You can't deactive super admin!", response.Message)
+
+		updatedAccount := models.Account{}
+		db.First(&updatedAccount, account.ID)
+		assert.True(t, updatedAccount.IsActive)
 	})
 }

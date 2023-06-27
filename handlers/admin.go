@@ -121,7 +121,17 @@ func AdminLoginHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, account)
 }
 
-// This Function Used To Deactivate An Account
+// DeactivateHandler deactivates an account.
+// @Summary Deactivate Account
+// @Description Deactivates the specified account.
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param id path int true "Account ID"
+// @Success 200 {object} models.Response
+// @Failure 400 {object} models.Response
+// @Failure 422 {object} models.Response
+// @Router /admin/deactivate/{id} [patch]
 func DeactivateHandler(c echo.Context, db *gorm.DB) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 

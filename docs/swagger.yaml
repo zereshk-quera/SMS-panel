@@ -209,6 +209,13 @@ definitions:
       username:
         type: string
     type: object
+  models.Response:
+    properties:
+      message:
+        type: string
+      responsecode:
+        type: integer
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -702,6 +709,35 @@ paths:
       summary: Register a new user
       tags:
       - users
+  /admin/deactivate/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Deactivates the specified account.
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Deactivate Account
+      tags:
+      - admin
   /admin/login:
     post:
       consumes:
