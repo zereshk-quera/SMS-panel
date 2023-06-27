@@ -8,6 +8,7 @@ import (
 	"SMS-panel/utils"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 // define this structs for swagger docs
@@ -76,12 +77,6 @@ func (a AccountHandler) RegisterHandler(c echo.Context) error {
 	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "firstname", "lastname", "email", "phone", "nationalid", "username", "password")
 	if jsonFormatErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
-	}
-
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
 	}
 
 	//check user validation
