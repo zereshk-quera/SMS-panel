@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -392,5 +393,104 @@ func TestDeactivateHandler(t *testing.T) {
 		updatedAccount := models.Account{}
 		db.First(&updatedAccount, account.ID)
 		assert.True(t, updatedAccount.IsActive)
+	})
+}
+
+func TestActivateHandler(t *testing.T) {
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	defer utils.CloseTestDatabase(db)
+
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
+
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   0,
+		Password: "password",
+		IsAdmin:  false,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
+
+	t.Run("ValidAccountID", func(t *testing.T) {
+		err = db.Model(&account).Update("IsActive", false).Error
+		assert.NoError(t, err)
+
+		log.Println("account activate status", account.IsActive)
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/admin/activate/%d", account.ID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(fmt.Sprintf("%d", account.ID))
+
+		err := handlers.ActivateHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, int(response.ResponseCode))
+		assert.Equal(t, "This Account is active From Now", response.Message)
+
+		updatedAccount := models.Account{}
+		err = db.First(&updatedAccount, account.ID).Error
+		assert.NoError(t, err)
+
+		assert.True(t, updatedAccount.IsActive)
+	})
+
+	t.Run("InvalidAccountID", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPatch, "/admin/activate/999", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues("999")
+
+		err := handlers.ActivateHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 422, int(response.ResponseCode))
+		assert.Equal(t, "Invalid Account ID", response.Message)
+	})
+
+	t.Run("AlreadyActiveAccount", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/admin/activate/%d", account.ID), nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(fmt.Sprintf("%d", account.ID))
+
+		account.IsActive = true
+		db.Save(&account)
+
+		err := handlers.ActivateHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, int(response.ResponseCode))
+		assert.Equal(t, "This Account is active!", response.Message)
 	})
 }

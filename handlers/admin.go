@@ -33,6 +33,8 @@ type AdminRegistrationRequest struct {
 // @Tags admin
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "User Token"
 // @Param adminRegistrationRequest body AdminRegistrationRequest true "Admin registration details"
 // @Success 200 {object} AccountResponse "Admin account created successfully"
 // @Failure 422 {object} ErrorResponse "Invalid JSON"
@@ -44,6 +46,7 @@ type AdminRegistrationRequest struct {
 // @Failure 502 {object} ErrorResponse "Can't connect to the database"
 // @Router /admin/register [post]
 func AdminRegisterHandler(c echo.Context, db *gorm.DB) error {
+	log.Println("env admin pass is *************************** ", os.Getenv("ADMIN_PASSWORD"))
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -59,7 +62,6 @@ func AdminRegisterHandler(c echo.Context, db *gorm.DB) error {
 
 	// check password correction
 	if jsonBody["password"].(string) != (os.Getenv("ADMIN_PASSWORD")) {
-		log.Println(os.Getenv("ADMIN_PASSWORD"))
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Password Isn't Correct"})
 	}
 
@@ -128,16 +130,19 @@ func AdminLoginHandler(c echo.Context, db *gorm.DB) error {
 // @Accept json
 // @Produce json
 // @Param id path int true "Account ID"
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Authorization header with Bearer token"
 // @Success 200 {object} models.Response
 // @Failure 400 {object} models.Response
 // @Failure 422 {object} models.Response
+// @Router /admin/deactivate/{id} [patch]
 // @Router /admin/deactivate/{id} [patch]
 func DeactivateHandler(c echo.Context, db *gorm.DB) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	var account models.Account
 
-	db.First(&account, id)
+	db.Where("id = ?", id).First(&account)
 	if account.ID == 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid Account ID"})
 	}
@@ -157,31 +162,38 @@ func DeactivateHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "This Account Isn't active From Now"})
 }
 
-// This Function Used To Activate An Account
-func ActivateHandler(c echo.Context) error {
+// ActivateHandler activates an account.
+// @Summary Activate Account
+// @Description Activates the specified account.
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param id path int true "Account ID"
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Authorization header with Bearer token"
+// @Success 200 {object} models.Response
+// @Failure 400 {object} models.Response
+// @Failure 422 {object} models.Response
+// @Router /admin/activate/{id} [patch]
+func ActivateHandler(c echo.Context, db *gorm.DB) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
-
 	var account models.Account
 
-	db.First(&account, id)
+	db.Where("id = ?", id).First(&account)
 	if account.ID == 0 {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid Account ID"})
 	}
 
 	// if account is active
 	if account.IsActive {
-		return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "This Account is active !"})
+		return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "This Account is active!"})
 	}
 
 	// activate account and update database
 	account.IsActive = true
 	db.Save(&account)
+	log.Println("Account Activated:", account)
+
 	return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "This Account is active From Now"})
 }
 

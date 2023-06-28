@@ -134,7 +134,7 @@ func LoginHandler(c echo.Context, db *gorm.DB) error {
 // @Tags users
 // @Security ApiKeyAuth
 // @Produce json
-// @Param Authorization header string true "User Token"  // Updated parameter name to "Authorization"
+// @Param Authorization header string true "User Token"
 // @Success 200 {object} BudgetAmountResponse
 // @Failure 401 {string} string
 // @Router /accounts/budget [get]
