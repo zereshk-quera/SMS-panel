@@ -26,6 +26,10 @@ type AdminRegistrationRequest struct {
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 }
+type ConfigurationRequest struct {
+	Name  string  `json:"name" example:"config_name"`
+	Value float64 `json:"value" example:"42.0"`
+}
 
 // AdminRegisterHandler registers a new admin
 // @Summary Register a new admin
@@ -197,8 +201,22 @@ func ActivateHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "This Account is active From Now"})
 }
 
-// This Function Used To Add a config
-func AddConfigHandler(c echo.Context) error {
+// AddConfigHandler creates a new configuration entry.
+// @Summary Create Configuration
+// @Description Create a new configuration entry
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param config body ConfigurationRequest true "Configuration object to be added"
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Authorization header with Bearer token"
+// @Success 200 {object} models.Response
+// @Failure 400 {object} models.Response
+// @Failure 401 {object} models.Response
+// @Failure 422 {object} models.Response
+// @Failure 500 {object} models.Response
+// @Router /admin/add-config [post]
+func AddConfigHandler(c echo.Context, db *gorm.DB) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -210,12 +228,6 @@ func AddConfigHandler(c echo.Context) error {
 	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "name", "value")
 	if jsonFormatErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
-	}
-
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
 	}
 
 	var existingConfig models.Configuration
@@ -233,7 +245,7 @@ func AddConfigHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, conf)
 	}
 
-	return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "Configuration Added Successfuly"})
+	return c.JSON(http.StatusOK, models.Response{ResponseCode: 200, Message: "Configuration Added Successfully"})
 }
 
 // This Function Used To Hide passwords with length 5 to 7 from admin in the messages

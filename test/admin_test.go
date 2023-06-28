@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"SMS-panel/handlers"
@@ -492,5 +493,111 @@ func TestActivateHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 200, int(response.ResponseCode))
 		assert.Equal(t, "This Account is active!", response.Message)
+	})
+}
+
+func TestAddConfigHandler(t *testing.T) {
+	// Create a test database connection
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	defer utils.CloseTestDatabase(db)
+
+	// Create a new Echo instance
+	e := echo.New()
+
+	t.Run("ValidRequest", func(t *testing.T) {
+		reqBody := `{"name": "config1", "value": 10}`
+		req := httptest.NewRequest(http.MethodPost, "/admin/add-config", strings.NewReader(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		err = handlers.AddConfigHandler(c, db)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		expectedResponse := models.Response{
+			ResponseCode: 200,
+			Message:      "Configuration Added Successfully",
+		}
+		assert.Equal(t, expectedResponse, response)
+
+		var conf models.Configuration
+		db.First(&conf, "name = ?", "config1")
+		assert.Equal(t, "config1", conf.Name)
+		assert.Equal(t, 10.0, conf.Value)
+	})
+
+	t.Run("InvalidJSON", func(t *testing.T) {
+		reqBody := `{"name": "config1"}`
+		req := httptest.NewRequest(http.MethodPost, "/admin/add-config", strings.NewReader(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		// Call the handler function
+		err = handlers.AddConfigHandler(c, db)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		expectedResponse := models.Response{
+			ResponseCode: 422,
+			Message:      "Input Json doesn't include value",
+		}
+		assert.Equal(t, expectedResponse, response)
+
+		var count int64
+		db.Model(&models.Configuration{}).Count(&count)
+		assert.Equal(t, int64(1), count) // set this one beacuse one will created in first test
+	})
+
+	t.Run("DuplicateName", func(t *testing.T) {
+		conf := models.Configuration{
+			Name:  "config1",
+			Value: 10.0,
+		}
+		db.Create(&conf)
+
+		reqBody := `{"name": "config1", "value": 20}`
+		req := httptest.NewRequest(http.MethodPost, "/admin/add-config", strings.NewReader(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.Set("db", db)
+
+		err = handlers.AddConfigHandler(c, db)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		expectedResponse := models.Response{
+			ResponseCode: 422,
+			Message:      "There is a config with input name in database",
+		}
+		assert.Equal(t, expectedResponse, response)
+
+		var count int64
+		db.Model(&models.Configuration{}).Count(&count)
+		assert.Equal(t, int64(1), count)
 	})
 }

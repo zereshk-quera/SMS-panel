@@ -44,6 +44,15 @@ definitions:
       amount:
         type: integer
     type: object
+  handlers.ConfigurationRequest:
+    properties:
+      name:
+        example: config_name
+        type: string
+      value:
+        example: 42
+        type: number
+    type: object
   handlers.ErrorResponse:
     properties:
       message:
@@ -743,6 +752,51 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Activate Account
+      tags:
+      - admin
+  /admin/add-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a new configuration entry
+      parameters:
+      - description: Configuration object to be added
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ConfigurationRequest'
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Configuration
       tags:
       - admin
   /admin/deactivate/{id}:

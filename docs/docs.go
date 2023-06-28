@@ -809,6 +809,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/add-config": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a new configuration entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Create Configuration",
+                "parameters": [
+                    {
+                        "description": "Configuration object to be added",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ConfigurationRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization header with Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/deactivate/{id}": {
             "patch": {
                 "security": [
@@ -1222,6 +1292,19 @@ const docTemplate = `{
             "properties": {
                 "amount": {
                     "type": "integer"
+                }
+            }
+        },
+        "handlers.ConfigurationRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "config_name"
+                },
+                "value": {
+                    "type": "number",
+                    "example": 42
                 }
             }
         },
