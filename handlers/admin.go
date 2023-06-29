@@ -249,7 +249,7 @@ func AddConfigHandler(c echo.Context, db *gorm.DB) error {
 }
 
 // This Function Used To Hide passwords with length 5 to 7 from admin in the messages
-func hidePassword(message string) string {
+func HidePassword(message string) string {
 	messageIndex := 0
 	res := ""
 	for messageIndex < len(message) {
@@ -276,12 +276,18 @@ func hidePassword(message string) string {
 	return res
 }
 
-// This function used to count messages for each account
-func SmsReportHandler(c echo.Context) error {
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
+// SmsReportHandler retrieves the SMS report.
+// @Summary Get SMS Report
+// @Description Retrieve the SMS report with the number of messages per account
+// @Tags admin
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Authorization header with Bearer token"
+// @Success 200 {object} map[string]int
+// @Failure 401 {object} models.Response
+// @Failure 500 {object} models.Response
+// @Router /admin/sms-report [get]
+func SmsReportHandler(c echo.Context, db *gorm.DB) error {
 	// get all accounts
 	var accounts []models.Account
 
@@ -327,7 +333,7 @@ func SmsSearchHandler(c echo.Context) error {
 		var tmp models.SMSMessage
 		db.First(&tmp, msg.ID)
 		if strings.Contains(tmp.Message, word) {
-			res = append(res, hidePassword(tmp.Message))
+			res = append(res, HidePassword(tmp.Message))
 			senders = append(senders, tmp.Sender)
 		}
 	}

@@ -497,12 +497,10 @@ func TestActivateHandler(t *testing.T) {
 }
 
 func TestAddConfigHandler(t *testing.T) {
-	// Create a test database connection
 	db, err := utils.CreateTestDatabase()
 	assert.NoError(t, err)
 	defer utils.CloseTestDatabase(db)
 
-	// Create a new Echo instance
 	e := echo.New()
 
 	t.Run("ValidRequest", func(t *testing.T) {
@@ -599,5 +597,125 @@ func TestAddConfigHandler(t *testing.T) {
 		var count int64
 		db.Model(&models.Configuration{}).Count(&count)
 		assert.Equal(t, int64(1), count)
+	})
+}
+
+func TestHidePassword(t *testing.T) {
+	t.Run("NoDigits", func(t *testing.T) {
+		message := "No digits in this message"
+		expectedResult := "No digits in this message"
+		result := handlers.HidePassword(message)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("HideShortNumber", func(t *testing.T) {
+		message := "12345 is a short number"
+		expectedResult := "_____ is a short number"
+		result := handlers.HidePassword(message)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("HideMediumNumber", func(t *testing.T) {
+		message := "1234567 is a medium number"
+		expectedResult := "_______ is a medium number"
+		result := handlers.HidePassword(message)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("HideLongNumber", func(t *testing.T) {
+		message := "12345678 is a long number"
+		expectedResult := "12345678 is a long number"
+		result := handlers.HidePassword(message)
+		assert.Equal(t, expectedResult, result)
+	})
+
+	t.Run("MultipleNumbers", func(t *testing.T) {
+		message := "12345 is a short number, and 987654321 is a long number"
+		expectedResult := "_____ is a short number, and 987654321 is a long number"
+		result := handlers.HidePassword(message)
+		assert.Equal(t, expectedResult, result)
+	})
+}
+
+func TestSmsReportHandler(t *testing.T) {
+	t.Run("NoAccounts", func(t *testing.T) {
+		// Create a test database and defer its closure
+		db, err := utils.CreateTestDatabase()
+		assert.NoError(t, err)
+		defer utils.CloseTestDatabase(db)
+
+		// Create an Echo instance and set up the request
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/admin/sms-report", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		// Call the handler
+		err = handlers.SmsReportHandler(c, db)
+
+		// Assert the handler's response
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var accountIDs map[string]int
+		err = json.Unmarshal(rec.Body.Bytes(), &accountIDs)
+		assert.NoError(t, err)
+
+		// Assert the result
+		assert.Empty(t, accountIDs)
+	})
+
+	t.Run("WithAccountsAndMessages", func(t *testing.T) {
+		// Create a test database and defer its closure
+		db, err := utils.CreateTestDatabase()
+		assert.NoError(t, err)
+		defer utils.CloseTestDatabase(db)
+		user := models.User{
+			FirstName:  "testuser",
+			LastName:   "testuser",
+			Phone:      "09376304339",
+			Email:      "amir@gmail.com",
+			NationalID: "123456789",
+		}
+		err = db.Create(&user).Error
+		assert.NoError(t, err)
+		accounts := []models.Account{
+			{ID: 1, UserID: 1, Username: "testuser1", Budget: 0, Password: "test", Token: "test", IsActive: true, IsAdmin: false},
+			{ID: 2, UserID: 1, Username: "testuser2", Budget: 0, Password: "test", Token: "test", IsActive: true, IsAdmin: false},
+			{ID: 3, UserID: 1, Username: "testuser3", Budget: 0, Password: "test", Token: "test", IsActive: true, IsAdmin: false},
+		}
+		err = db.Create(&accounts).Error
+		assert.NoError(t, err)
+
+		messages := []models.SMSMessage{
+			{ID: 1, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message", DeliveryReport: "done"},
+			{ID: 2, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message", DeliveryReport: "done"},
+			{ID: 3, AccountID: 2, Sender: "123456789", Recipient: "12345678", Message: "message", DeliveryReport: "done"},
+			{ID: 4, AccountID: 2, Sender: "123456789", Recipient: "12345678", Message: "message", DeliveryReport: "done"},
+			{ID: 5, AccountID: 3, Sender: "123456789", Recipient: "12345678", Message: "message", DeliveryReport: "done"},
+			{ID: 6, AccountID: 3, Sender: "123456789", Recipient: "12345678", Message: "message", DeliveryReport: "done"},
+		}
+		err = db.Create(&messages).Error
+		assert.NoError(t, err)
+
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/admin/sms-report", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		err = handlers.SmsReportHandler(c, db)
+
+		// Assert the handler's response
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var accountIDs map[string]int
+		err = json.Unmarshal(rec.Body.Bytes(), &accountIDs)
+		assert.NoError(t, err)
+
+		// Assert the result
+		assert.Equal(t, 3, len(accountIDs))
+		assert.Equal(t, 2, accountIDs["Account 1"])
+		assert.Equal(t, 2, accountIDs["Account 2"])
+		assert.Equal(t, 2, accountIDs["Account 3"])
 	})
 }

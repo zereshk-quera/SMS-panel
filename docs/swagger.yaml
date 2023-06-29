@@ -902,6 +902,37 @@ paths:
       summary: Register a new admin
       tags:
       - admin
+  /admin/sms-report:
+    get:
+      description: Retrieve the SMS report with the number of messages per account
+      parameters:
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get SMS Report
+      tags:
+      - admin
   /sms/periodic-sms:
     post:
       consumes:
