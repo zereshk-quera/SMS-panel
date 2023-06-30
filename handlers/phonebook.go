@@ -45,12 +45,18 @@ func NewPhonebookHandler(db *gorm.DB) *PhonebookHandler {
 // @Router /account/phone-books/ [post]
 func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 	var phoneBook models.PhoneBook
+	account := c.Get("account").(models.Account)
+
 	if err := c.Bind(&phoneBook); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	if phoneBook.Name == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Name is required"})
+	}
+
+	if phoneBook.AccountID != account.ID {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Permision Denied"})
 	}
 
 	if err := p.db.Create(&phoneBook).Error; err != nil {
@@ -65,16 +71,15 @@ func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
-// @Param accountID path int true "Account ID"
 // @Success 200 {array} PhoneBookResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /account/{accountID}/phone-books/ [get]
+// @Router /account/phone-books/ [get]
 func (p *PhonebookHandler) GetAllPhoneBooks(c echo.Context) error {
-	accountID := c.Param("accountID")
+	account := c.Get("account").(models.Account)
 
 	var phoneBooks []models.PhoneBook
 	// Get all matched records
-	result := p.db.Where("account_id = ?", accountID).Find(&phoneBooks)
+	result := p.db.Where("account_id = ?", account.ID).Find(&phoneBooks)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -87,19 +92,18 @@ func (p *PhonebookHandler) GetAllPhoneBooks(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
-// @Param accountID path int true "Account ID"
 // @Param phoneBookID path int true "Phone Book ID"
 // @Success 200 {object} PhoneBookResponse
 // @Failure 404 {string} string
 // @Failure 500 {object} ErrorResponse
-// @Router /account/{accountID}/phone-books/{phoneBookID} [get]
+// @Router /account/phone-books/{phoneBookID} [get]
 func (p *PhonebookHandler) ReadPhoneBook(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
-	accountID := c.Param("accountID")
+	account := c.Get("account").(models.Account)
 
 	var phoneBook models.PhoneBook
 	// Find the phone book with matching phoneBookID and accountID
-	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, account.ID).First(&phoneBook)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phonebook not found")
@@ -115,7 +119,6 @@ func (p *PhonebookHandler) ReadPhoneBook(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
-// @Param accountID path int true "Account ID"
 // @Param phoneBookID path int true "Phone Book ID"
 // @Param phoneBook body PhoneBookRequest true "Phone Book object"
 // @Success 200 {object} PhoneBookResponse
@@ -125,11 +128,11 @@ func (p *PhonebookHandler) ReadPhoneBook(c echo.Context) error {
 // @Router /account/{accountID}/phone-books/{phoneBookID} [put]
 func (p *PhonebookHandler) UpdatePhoneBook(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
-	accountID := c.Param("accountID")
+	account := c.Get("account").(models.Account)
 
 	var phoneBook models.PhoneBook
 
-	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, account.ID).First(&phoneBook)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -155,18 +158,17 @@ func (p *PhonebookHandler) UpdatePhoneBook(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
-// @Param accountID path int true "Account ID"
 // @Param phoneBookID path int true "Phone Book ID"
 // @Success 200 {string} string
 // @Failure 404 {string} string
 // @Failure 500 {object} ErrorResponse
-// @Router /account/{accountID}/phone-books/{phoneBookID} [delete]
+// @Router /account/phone-books/{phoneBookID} [delete]
 func (p *PhonebookHandler) DeletePhoneBook(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
-	accountID := c.Param("accountID")
+	account := c.Get("account").(models.Account)
 
 	var phoneBook models.PhoneBook
-	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, accountID).First(&phoneBook)
+	result := p.db.Where("id = ? AND account_id = ?", phoneBookID, account.ID).First(&phoneBook)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
