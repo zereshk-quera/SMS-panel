@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	database "SMS-panel/database"
-	"SMS-panel/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -10,7 +8,11 @@ import (
 	"net/http"
 	"time"
 
+	database "SMS-panel/database"
+	"SMS-panel/models"
+
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 const (
@@ -72,28 +74,26 @@ type RequestResponse struct {
 // @Tags payment
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "User Token"
 // @Param body body AmountFee true "Payment request details"
 // @Success 200 {object} RequestResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /accounts/payment/request [post]
-func PaymentRequestHandler(c echo.Context) error {
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
-
+func PaymentRequestHandler(c echo.Context, db *gorm.DB) error {
 	// Read Request Body
 	jsonBody := make(map[string]int)
-	err = json.NewDecoder(c.Request().Body).Decode(&jsonBody)
+	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
 	if _, ok := jsonBody["fee"]; !ok {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Json doesn't include fee"})
+	}
+	if jsonBody["fee"] < 1000 {
+		return c.JSON(http.StatusBadRequest, models.Response{ResponseCode: 400, Message: "fee must not be under 1000"})
 	}
 
 	account := c.Get("account")
@@ -172,6 +172,7 @@ func PaymentRequestHandler(c echo.Context) error {
 // @Tags payment
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "User Token"
 // @Param body body VerifyResponse true "Payment verify details"
 // @Success 200 {string} string
 // @Failure 400 {string} ErrorResponse
@@ -253,7 +254,6 @@ func PaymentVerifyHandler(c echo.Context) error {
 				}
 			}
 		}
-
 	}
 
 	transaction.Status = "Failed"

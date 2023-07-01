@@ -542,7 +542,6 @@ func TestAddConfigHandler(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		// Call the handler function
 		err = handlers.AddConfigHandler(c, db)
 		assert.NoError(t, err)
 
@@ -639,21 +638,17 @@ func TestHidePassword(t *testing.T) {
 
 func TestSmsReportHandler(t *testing.T) {
 	t.Run("NoAccounts", func(t *testing.T) {
-		// Create a test database and defer its closure
 		db, err := utils.CreateTestDatabase()
 		assert.NoError(t, err)
 		defer utils.CloseTestDatabase(db)
 
-		// Create an Echo instance and set up the request
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/admin/sms-report", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
-		// Call the handler
 		err = handlers.SmsReportHandler(c, db)
 
-		// Assert the handler's response
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -661,12 +656,10 @@ func TestSmsReportHandler(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &accountIDs)
 		assert.NoError(t, err)
 
-		// Assert the result
 		assert.Empty(t, accountIDs)
 	})
 
 	t.Run("WithAccountsAndMessages", func(t *testing.T) {
-		// Create a test database and defer its closure
 		db, err := utils.CreateTestDatabase()
 		assert.NoError(t, err)
 		defer utils.CloseTestDatabase(db)
@@ -704,7 +697,6 @@ func TestSmsReportHandler(t *testing.T) {
 		c := e.NewContext(req, rec)
 		err = handlers.SmsReportHandler(c, db)
 
-		// Assert the handler's response
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -712,7 +704,6 @@ func TestSmsReportHandler(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &accountIDs)
 		assert.NoError(t, err)
 
-		// Assert the result
 		assert.Equal(t, 3, len(accountIDs))
 		assert.Equal(t, 2, accountIDs["Account 1"])
 		assert.Equal(t, 2, accountIDs["Account 2"])

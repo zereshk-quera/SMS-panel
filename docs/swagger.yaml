@@ -631,6 +631,11 @@ paths:
       - application/json
       description: Zarinpal Payment to add budget to account
       parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Payment request details
         in: body
         name: body
@@ -665,6 +670,11 @@ paths:
       - application/json
       description: Verify Zarinpal Payment to add budget to account
       parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Payment verify details
         in: body
         name: body

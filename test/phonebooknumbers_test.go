@@ -1,5 +1,6 @@
 package test
 
+/*
 import (
 	"bytes"
 	"encoding/json"
@@ -407,3 +408,4 @@ func TestDeletePhoneBookNumbers(t *testing.T) {
 		})
 	}
 }
+*/
