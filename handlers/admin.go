@@ -312,15 +312,21 @@ func SmsReportHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, accountIDs)
 }
 
-// This function used to give messages which have specific word
-func SmsSearchHandler(c echo.Context) error {
+// SmsSearchHandler searches for SMS messages containing a specific word.
+// @Summary Search SMS Messages
+// @Description Search for SMS messages containing a specific word
+// @Tags admin
+// @Param word path string true "Word to search for in SMS messages"
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Authorization header with Bearer token"
+// @Success 200 {object} map[string]string
+// @Failure 401 {object} models.Response
+// @Failure 500 {object} models.Response
+// @Router /admin/search/{word} [get]
+func SmsSearchHandler(c echo.Context, db *gorm.DB) error {
 	word := c.Param("word")
-
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
 
 	var messages []models.SMSMessage
 	db.Select("id").Find(&messages)

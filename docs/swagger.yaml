@@ -902,6 +902,44 @@ paths:
       summary: Register a new admin
       tags:
       - admin
+  /admin/search/{word}:
+    get:
+      consumes:
+      - application/json
+      description: Search for SMS messages containing a specific word
+      parameters:
+      - description: Word to search for in SMS messages
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Search SMS Messages
+      tags:
+      - admin
   /admin/sms-report:
     get:
       description: Retrieve the SMS report with the number of messages per account

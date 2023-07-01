@@ -719,3 +719,106 @@ func TestSmsReportHandler(t *testing.T) {
 		assert.Equal(t, 2, accountIDs["Account 3"])
 	})
 }
+
+func TestSmsSearchHandler(t *testing.T) {
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	defer utils.CloseTestDatabase(db)
+	user := models.User{
+		FirstName:  "testuser",
+		LastName:   "testuser",
+		Phone:      "09376304339",
+		Email:      "amir@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
+	accounts := []models.Account{
+		{ID: 1, UserID: 1, Username: "testuser1", Budget: 0, Password: "test", Token: "test", IsActive: true, IsAdmin: false},
+	}
+	err = db.Create(&accounts).Error
+	assert.NoError(t, err)
+
+	t.Run("WordFound", func(t *testing.T) {
+		messages := []models.SMSMessage{
+			{ID: 1, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message1", DeliveryReport: "done"},
+			{ID: 2, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message2", DeliveryReport: "done"},
+		}
+		err = db.Create(&messages).Error
+		assert.NoError(t, err)
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/admin/search/{word}", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("word")
+		c.SetParamValues("message")
+
+		err = handlers.SmsSearchHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response map[string]string
+		log.Println(rec.Body.String())
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		assert.Len(t, response, 2)
+		assert.Equal(t, "message1", response["1. 123456789 "])
+		assert.Equal(t, "message2", response["2. 123456789 "])
+	})
+
+	t.Run("WordNotFound", func(t *testing.T) {
+		//messages := []models.SMSMessage{
+		//	{ID: 3, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message1", DeliveryReport: "done"},
+		//	{ID: 4, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message2", DeliveryReport: "done"},
+		//}
+		//err = db.Create(&messages).Error
+		//assert.NoError(t, err)
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/admin/search/{word}", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("word")
+		c.SetParamValues("test")
+
+		err = handlers.SmsSearchHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response map[string]string
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Empty(t, response)
+	})
+
+	t.Run("MessagesFoundWithPassword", func(t *testing.T) {
+		messages := []models.SMSMessage{
+			{ID: 3, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "test1234560", DeliveryReport: "done"},
+			{ID: 4, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "test2345678", DeliveryReport: "done"},
+		}
+		err = db.Create(&messages).Error
+		assert.NoError(t, err)
+
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/admin/search/{word}", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetParamNames("word")
+		c.SetParamValues("test")
+
+		err = handlers.SmsSearchHandler(c, db)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response map[string]string
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 2, len(response))
+		assert.Equal(t, "test_______", response["1. 123456789 "])
+		assert.Equal(t, "test_______", response["2. 123456789 "])
+	})
+}
