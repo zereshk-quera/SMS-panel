@@ -769,12 +769,6 @@ func TestSmsSearchHandler(t *testing.T) {
 	})
 
 	t.Run("WordNotFound", func(t *testing.T) {
-		//messages := []models.SMSMessage{
-		//	{ID: 3, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message1", DeliveryReport: "done"},
-		//	{ID: 4, AccountID: 1, Sender: "123456789", Recipient: "12345678", Message: "message2", DeliveryReport: "done"},
-		//}
-		//err = db.Create(&messages).Error
-		//assert.NoError(t, err)
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/admin/search/{word}", nil)
 		rec := httptest.NewRecorder()
@@ -820,5 +814,54 @@ func TestSmsSearchHandler(t *testing.T) {
 		assert.Equal(t, 2, len(response))
 		assert.Equal(t, "test_______", response["1. 123456789 "])
 		assert.Equal(t, "test_______", response["2. 123456789 "])
+	})
+}
+
+func TestAddBadWordHandler(t *testing.T) {
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	defer utils.CloseTestDatabase(db)
+
+	t.Run("SuccessfulCreation", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/admin/add-bad-word/:word", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		c.SetParamNames("word")
+		c.SetParamValues("example")
+
+		err := handlers.AddBadWordHandler(c, db)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var bw models.Bad_Word
+		err = json.Unmarshal(rec.Body.Bytes(), &bw)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "example", bw.Word)
+		assert.NotEmpty(t, bw.Regex)
+	})
+
+	t.Run("FailureExistingWord", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/admin/add-bad-word/:word", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		c.SetParamNames("word")
+		c.SetParamValues("example")
+
+		err = handlers.AddBadWordHandler(c, db)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 422, int(response.ResponseCode))
+		assert.Equal(t, "This word added before as a bad word in database", response.Message)
 	})
 }

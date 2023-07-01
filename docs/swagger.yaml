@@ -192,6 +192,15 @@ definitions:
       Status:
         type: string
     type: object
+  models.Bad_Word:
+    properties:
+      id:
+        type: integer
+      regex:
+        type: string
+      word:
+        type: string
+    type: object
   models.PhoneBook:
     properties:
       accountID:
@@ -752,6 +761,46 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Activate Account
+      tags:
+      - admin
+  /admin/add-bad-word/{word}:
+    post:
+      consumes:
+      - application/json
+      description: Add a new bad word to the database
+      parameters:
+      - description: Word to add as a bad word
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Bad_Word'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Add a bad word
       tags:
       - admin
   /admin/add-config:

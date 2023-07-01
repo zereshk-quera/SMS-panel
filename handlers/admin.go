@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
@@ -354,14 +353,22 @@ func SmsSearchHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func AddBadWordHandler(c echo.Context) error {
+// AddBadWordHandler
+// @Summary Add a bad word
+// @Description Add a new bad word to the database
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param word path string true "Word to add as a bad word"
+// @Security ApiKeyAuth
+// @Param Authorization header string true "Authorization header with Bearer token"
+// @Success 200 {object} models.Bad_Word
+// @Failure 422 {object} models.Response
+// @Failure 500 {object} models.Response
+// @Failure 502 {object} models.Response
+// @Router /admin/add-bad-word/{word} [post]
+func AddBadWordHandler(c echo.Context, db *gorm.DB) error {
 	word := c.Param("word")
-
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
 
 	var existingWord models.Bad_Word
 	db.Where("word = ?", word).First(&existingWord)
