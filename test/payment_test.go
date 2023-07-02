@@ -152,3 +152,69 @@ func TestPaymentRequestHandler(t *testing.T) {
 		assert.Equal(t, "User Not Founded", response.Message)
 	})
 }
+
+func TestPaymentVerifyHandler(t *testing.T) {
+	e := echo.New()
+	db, err := utils.CreateTestDatabase()
+	assert.NoError(t, err)
+	defer utils.CloseTestDatabase(db)
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
+
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   0,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
+
+	transaction := models.Transaction{
+		Authority: "test_authority",
+		Status:    "Wait",
+		Amount:    10000000,
+		AccountID: account.ID,
+	}
+	err = db.Create(&transaction).Error
+	assert.NoError(t, err)
+
+	t.Run("TransactionNotFound", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/payment/verify?Authority=invalid_authority&Status=OK", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		err := handlers.PaymentVerifyHandler(c, db)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		var response models.Response
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 404, int(response.ResponseCode))
+		assert.Equal(t, "Transaction Not Founded", response.Message)
+	})
+
+	t.Run("PaymentFailed", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/payment/verify?Authority=test_authority&Status=NOK", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		err := handlers.PaymentVerifyHandler(c, db)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, "\"Failed Payment\"\n", rec.Body.String())
+	})
+}

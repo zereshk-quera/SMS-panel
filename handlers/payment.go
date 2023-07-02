@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 
 	"github.com/labstack/echo/v4"
@@ -179,13 +178,7 @@ func PaymentRequestHandler(c echo.Context, db *gorm.DB) error {
 // @Failure 422 {string} ErrorResponse
 // @Failure 500 {string} ErrorResponse
 // @Router /accounts/payment/verify [get]
-func PaymentVerifyHandler(c echo.Context) error {
-	// Connect To The Datebase
-	db, err := database.GetConnection()
-	if err != nil {
-		return c.JSON(http.StatusBadGateway, models.Response{ResponseCode: 502, Message: "Can't Connect To Database"})
-	}
-
+func PaymentVerifyHandler(c echo.Context, db *gorm.DB) error {
 	authority := c.QueryParam("Authority")
 	status := c.QueryParam("Status")
 
