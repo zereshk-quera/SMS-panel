@@ -103,3 +103,7 @@ func IsSenderNumberExist(
 
 	return err == nil
 }
+
+func DoesAcountHaveBudget(budget int64, cost int64) bool {
+	return budget > cost
+}

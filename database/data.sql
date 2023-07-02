@@ -27,7 +27,7 @@ INSERT INTO public.users (id, first_name, last_name, phone, email, national_id) 
 -- Data for Name: accounts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.accounts (id, user_id, username, budget, password, token, is_active) VALUES (1, 1, 'adel', 0, '$2a$10$kMc4TRt0i1WCIdABCPAivuuV1SKY2G82HExrJJntcjKud5B/ZsjY.', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODc1MjUzNjIsImlkIjoxfQ.WvXK4ugzTEn6fQhaKRgW7jiy9irpSqkwhNh11X2Tg90', true);
+INSERT INTO public.accounts (id, user_id, username, budget, password, token, is_active) VALUES (1, 1, 'adel', 440, '$2a$10$kMc4TRt0i1WCIdABCPAivuuV1SKY2G82HExrJJntcjKud5B/ZsjY.', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODc1OTY0NTUsImlkIjoxfQ.v4tmAt0PqQ9bYitkYMMZzBIFuH9adOhSy6aGU1HA3TA', true);
 
 
 --
@@ -40,18 +40,21 @@ INSERT INTO public.accounts (id, user_id, username, budget, password, token, is_
 -- Data for Name: configuration; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public.configuration (id, name, value) VALUES (1, 'group sms', 10);
 
 
 --
 -- Data for Name: phone_books; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public.phone_books (id, account_id, name) VALUES (1, 1, 'phonebook_1');
 
 
 --
 -- Data for Name: phone_book_numbers; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public.phone_book_numbers (id, phone_book_id, prefix, name, phone, username) VALUES (1, 1, NULL, 'ali', '09191234567', 'ali');
 
 
 --
@@ -68,12 +71,21 @@ INSERT INTO public.schema_migrations (version, dirty) VALUES (10, false);
 INSERT INTO public.sender_numbers (id, number, is_exclusive, is_default) VALUES (1, '09121234567', false, true);
 INSERT INTO public.sender_numbers (id, number, is_exclusive, is_default) VALUES (2, '09141234567', false, true);
 INSERT INTO public.sender_numbers (id, number, is_exclusive, is_default) VALUES (3, '09151234567', true, false);
+INSERT INTO public.sender_numbers (id, number, is_exclusive, is_default) VALUES (4, '09161234567', true, false);
 
 
 --
 -- Data for Name: sms_messages; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (7, '09151234567', '09191234567', 'Yooo', NULL, 'Message sent field', '2023-06-24 09:05:49.047283', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (8, '09141234567', '09191234567', 'Yooo', NULL, 'Message sent field', '2023-06-24 09:16:47.999489', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (9, '09141234567', '09191234567', 'Yooo', NULL, 'Message sent field', '2023-06-24 09:17:27.13585', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (10, '09141234567', '09191234567', 'Yooo', NULL, 'Message sent successfully', '2023-06-24 09:17:42.347483', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (11, '09151234567', '09191234567', 'Yooo', NULL, 'Message sent successfully', '2023-06-24 09:26:17.325593', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (12, '09151234567', '09191234567', 'Yooo', NULL, 'Message sent successfully', '2023-06-24 09:42:08.563243', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (13, '09141234567', '09191234567', 'Yooo', NULL, 'Message sent successfully', '2023-06-24 09:42:28.548462', 1);
+INSERT INTO public.sms_messages (id, sender, recipient, message, schedule, delivery_report, created_at, account_id) VALUES (14, '09151234567', '09131234567', 'Hello, World!', NULL, 'Message sent successfully', '2023-06-24 11:20:49.579756', 1);
 
 
 --
@@ -86,7 +98,7 @@ INSERT INTO public.sender_numbers (id, number, is_exclusive, is_default) VALUES 
 -- Data for Name: user_numbers; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.user_numbers (id, user_id, number_id, start_date, end_date, is_available) VALUES (1, 1, 3, '2023-06-23', '2023-06-23', true);
+INSERT INTO public.user_numbers (id, user_id, number_id, start_date, end_date, is_available, subscription_package_id) VALUES (1, 1, 3, '2023-06-23', '2023-06-23', true, NULL);
 
 
 --
@@ -107,35 +119,35 @@ SELECT pg_catalog.setval('public.budget_id_seq', 1, false);
 -- Name: configuration_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.configuration_id_seq', 1, false);
+SELECT pg_catalog.setval('public.configuration_id_seq', 1, true);
 
 
 --
 -- Name: phone_book_numbers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.phone_book_numbers_id_seq', 1, false);
+SELECT pg_catalog.setval('public.phone_book_numbers_id_seq', 1, true);
 
 
 --
 -- Name: phone_books_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.phone_books_id_seq', 1, false);
+SELECT pg_catalog.setval('public.phone_books_id_seq', 1, true);
 
 
 --
 -- Name: sender_numbers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.sender_numbers_id_seq', 3, true);
+SELECT pg_catalog.setval('public.sender_numbers_id_seq', 4, true);
 
 
 --
 -- Name: sms_messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.sms_messages_id_seq', 1, false);
+SELECT pg_catalog.setval('public.sms_messages_id_seq', 14, true);
 
 
 --
