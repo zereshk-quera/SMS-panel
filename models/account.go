@@ -8,4 +8,5 @@ type Account struct {
 	Password string `gorm:"type:varchar(255)"`
 	Token    string `gorm:"not null"`
 	IsActive bool   `gorm:"default:true"`
+	IsAdmin  bool   `gorm:"default:false"`
 }

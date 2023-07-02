@@ -27,17 +27,6 @@ definitions:
       amount:
         type: integer
     type: object
-  handlers.CreatePhoneBookNumberRequest:
-    properties:
-      name:
-        type: string
-      phone:
-        type: string
-      phoneBookID:
-        type: integer
-      prefix:
-        type: string
-    type: object
   handlers.ErrorResponse:
     properties:
       message:
@@ -218,110 +207,12 @@ info:
   title: SMS-PANEL
   version: "1.0"
 paths:
-  /account/{accountID}/phone-books/:
-    get:
-      consumes:
-      - application/json
-      description: Get all phone books for a given account ID
-      parameters:
-      - description: Account ID
-        in: path
-        name: accountID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/handlers.PhoneBookResponse'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get all phone books
-      tags:
-      - phonebook
   /account/{accountID}/phone-books/{phoneBookID}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a phone book by ID for a given account ID
-      parameters:
-      - description: Account ID
-        in: path
-        name: accountID
-        required: true
-        type: integer
-      - description: Phone Book ID
-        in: path
-        name: phoneBookID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "404":
-          description: Not Found
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Delete a phone book
-      tags:
-      - phonebook
-    get:
-      consumes:
-      - application/json
-      description: Get a phone book by ID for a given account ID
-      parameters:
-      - description: Account ID
-        in: path
-        name: accountID
-        required: true
-        type: integer
-      - description: Phone Book ID
-        in: path
-        name: phoneBookID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.PhoneBookResponse'
-        "404":
-          description: Not Found
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get a phone book
-      tags:
-      - phonebook
     put:
       consumes:
       - application/json
       description: Update a phone book by ID for a given account ID
       parameters:
-      - description: Account ID
-        in: path
-        name: accountID
-        required: true
-        type: integer
       - description: Phone Book ID
         in: path
         name: phoneBookID
@@ -356,6 +247,26 @@ paths:
       tags:
       - phonebook
   /account/phone-books/:
+    get:
+      consumes:
+      - application/json
+      description: Get all phone books for a given account ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PhoneBookResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get all phone books
+      tags:
+      - phonebook
     post:
       consumes:
       - application/json
@@ -383,6 +294,63 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Create a phone book entry
+      tags:
+      - phonebook
+  /account/phone-books/{phoneBookID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a phone book by ID for a given account ID
+      parameters:
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a phone book
+      tags:
+      - phonebook
+    get:
+      consumes:
+      - application/json
+      description: Get a phone book by ID for a given account ID
+      parameters:
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get a phone book
       tags:
       - phonebook
   /account/phone-books/{phoneBookID}/phone-book-numbers:
@@ -427,7 +395,7 @@ paths:
         name: phoneBookNumber
         required: true
         schema:
-          $ref: '#/definitions/handlers.CreatePhoneBookNumberRequest'
+          $ref: '#/definitions/models.PhoneBookNumber'
       produces:
       - application/json
       responses:

@@ -1,10 +1,10 @@
 package middlewares
 
 import (
-	"os"
-
 	database "SMS-panel/database"
 	"SMS-panel/models"
+	"os"
+
 	"fmt"
 	"time"
 
@@ -12,7 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
+func IsAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := c.Request()
 		tokenString := req.Header.Get("Authorization")
@@ -45,6 +45,10 @@ func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 			if err != nil {
 				return echo.ErrInternalServerError
 			}
+			//account isn't an admin
+			if claims["admin"].(bool) == false {
+				return echo.ErrUnauthorized
+			}
 
 			//Find Account
 			var account models.Account
@@ -54,13 +58,12 @@ func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
 			if account.ID == 0 {
 				return echo.ErrUnauthorized
 			}
-			//account is deactive
+
+			//account isn't active
 			if account.Token == "" && account.IsActive == false {
 				return echo.ErrUnauthorized
 			}
 
-			//Add Account Object To Context
-			c.Set("account", account)
 			return next(c)
 
 		} else {

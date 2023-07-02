@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreatePhoneBookNumberRequest"
+                            "$ref": "#/definitions/models.PhoneBookNumber"
                         }
                     }
                 ],
@@ -980,23 +980,6 @@ const docTemplate = `{
             "properties": {
                 "amount": {
                     "type": "integer"
-                }
-            }
-        },
-        "handlers.CreatePhoneBookNumberRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "phoneBookID": {
-                    "type": "integer"
-                },
-                "prefix": {
-                    "type": "string"
                 }
             }
         },
