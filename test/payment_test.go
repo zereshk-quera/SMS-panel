@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -94,7 +93,6 @@ func TestPaymentRequestHandler(t *testing.T) {
 
 		err := handlers.PaymentRequestHandler(c, db)
 		assert.NoError(t, err)
-		log.Println(rec.Body.String())
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -426,7 +425,6 @@ func TestActivateHandler(t *testing.T) {
 		err = db.Model(&account).Update("IsActive", false).Error
 		assert.NoError(t, err)
 
-		log.Println("account activate status", account.IsActive)
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/admin/activate/%d", account.ID), nil)
 		rec := httptest.NewRecorder()
@@ -750,7 +748,6 @@ func TestSmsSearchHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var response map[string]string
-		log.Println(rec.Body.String())
 		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 

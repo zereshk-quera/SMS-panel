@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -64,7 +63,6 @@ func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
-	log.Println("sender number is ", reqBody.SenderNumber)
 	// Check if sender number is available
 	senderNumberExisted := utils.IsSenderNumberExist(
 		ctx, db, reqBody.SenderNumber, account.UserID,

@@ -448,6 +448,8 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
+		newBudget := 1000
+		err = db.Model(&account).Update("budget", newBudget).Error
 		e := echo.New()
 		reqBody := handlers.SendSMSRequestPeriodic{
 			Username:     "",
