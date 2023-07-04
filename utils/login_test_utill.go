@@ -15,7 +15,8 @@ func CreateTestDatabase() (*gorm.DB, error) {
 
 	err = db.AutoMigrate(&models.User{}, &models.Account{}, &models.Bad_Word{},
 		&models.Configuration{}, &models.PhoneBook{}, &models.PhoneBookNumber{},
-		&models.Transaction{}, &models.SMSMessage{})
+		&models.Transaction{}, &models.SMSMessage{},
+		&models.SenderNumber{}, &models.UserNumbers{})
 	if err != nil {
 		return nil, err
 	}

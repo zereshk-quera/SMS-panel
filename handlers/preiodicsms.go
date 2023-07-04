@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
@@ -42,7 +41,7 @@ type SendSMSRequestPeriodic struct {
 // @Failure 400 {string} string "Insufficient budget"
 // @Failure 500 {string} string "Internal server error"
 // @Router /sms/periodic-sms [post]
-func PeriodicSendSMSHandler(c echo.Context) error {
+func PeriodicSendSMSHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	ctx := c.Request().Context()
 	var request SendSMSRequestPeriodic
@@ -57,12 +56,6 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 
 	if request.Phone == "" && request.Username == "" && request.PhoneBookID == "" {
 		return c.String(http.StatusBadRequest, "Recipient not provided")
-	}
-
-	db, err := database.GetConnection()
-	if err != nil {
-		log.Printf("Failed to get database connection: %s", err.Error())
-		return fmt.Errorf("database issue")
 	}
 
 	// Check if sender number is available
@@ -92,7 +85,6 @@ func PeriodicSendSMSHandler(c echo.Context) error {
 	if err := phoneNumberQuery.Preload("PhoneBook").Find(&phoneBookNumbers).Error; err != nil {
 		return c.String(http.StatusBadRequest, "Recipient does not exist in the phone book")
 	}
-
 	smsCount := len(phoneBookNumbers)
 	reduceErr := reduceAccountBudget(db, account, smsCount)
 

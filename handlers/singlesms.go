@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 )
@@ -43,7 +44,7 @@ type ErrorResponseSingle struct {
 // @Failure 404 {object} ErrorResponseSingle
 // @Failure 500 {object} ErrorResponseSingle
 // @Router /sms/single-sms [post]
-func SendSingleSMSHandler(c echo.Context) error {
+func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	ctx := c.Request().Context()
 
@@ -63,16 +64,7 @@ func SendSingleSMSHandler(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
-
-	db, err := database.GetConnection()
-	if err != nil {
-		errResponse := ErrorResponseSingle{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, errResponse)
-	}
-
+	log.Println("sender number is ", reqBody.SenderNumber)
 	// Check if sender number is available
 	senderNumberExisted := utils.IsSenderNumberExist(
 		ctx, db, reqBody.SenderNumber, account.UserID,
