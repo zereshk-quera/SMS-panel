@@ -25,6 +25,36 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/account/phone-books/": {
+            "get": {
+                "description": "Get all phone books for a given account ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "phonebook"
+                ],
+                "summary": "Get all phone books",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.PhoneBookResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new phone book entry",
                 "consumes": [
@@ -259,6 +289,92 @@ const docTemplate = `{
                 }
             }
         },
+        "/account/phone-books/{phoneBookID}": {
+            "get": {
+                "description": "Get a phone book by ID for a given account ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "phonebook"
+                ],
+                "summary": "Get a phone book",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Phone Book ID",
+                        "name": "phoneBookID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PhoneBookResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a phone book by ID for a given account ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "phonebook"
+                ],
+                "summary": "Delete a phone book",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Phone Book ID",
+                        "name": "phoneBookID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/account/phone-books/{phoneBookID}/phone-book-numbers": {
             "get": {
                 "description": "Get all phone book numbers for a given PhoneBookID",
@@ -306,97 +422,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/account/{accountID}/phone-books/": {
-            "get": {
-                "description": "Get all phone books for a given account ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "phonebook"
-                ],
-                "summary": "Get all phone books",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "accountID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handlers.PhoneBookResponse"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/account/{accountID}/phone-books/{phoneBookID}": {
-            "get": {
-                "description": "Get a phone book by ID for a given account ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "phonebook"
-                ],
-                "summary": "Get a phone book",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "accountID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Phone Book ID",
-                        "name": "phoneBookID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.PhoneBookResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
             "put": {
                 "description": "Update a phone book by ID for a given account ID",
                 "consumes": [
@@ -410,13 +436,6 @@ const docTemplate = `{
                 ],
                 "summary": "Update a phone book",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "accountID",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "type": "integer",
                         "description": "Phone Book ID",
@@ -445,55 +464,6 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a phone book by ID for a given account ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "phonebook"
-                ],
-                "summary": "Delete a phone book",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "accountID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Phone Book ID",
-                        "name": "phoneBookID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "404": {
@@ -831,6 +801,10 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Add a new bad word to the database",
+
+        "/accounts/rent_number": {
+            "post": {
+                "description": "Rent available number for this account",
                 "consumes": [
                     "application/json"
                 ],
@@ -919,6 +893,19 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
+
+                    "users"
+                ],
+                "summary": "Rent number",
+                "parameters": [
+                    {
+                        "description": "Get sender number and subscription package.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RentNumberRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -994,6 +981,11 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.Response"
+
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "400": {
@@ -1097,6 +1089,7 @@ const docTemplate = `{
                     "422": {
                         "description": "Username already exists",
                         "schema": {
+
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
@@ -1108,6 +1101,7 @@ const docTemplate = `{
                     },
                     "502": {
                         "description": "Can't connect to the database",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -1116,6 +1110,8 @@ const docTemplate = `{
             }
         },
         "/admin/search/{word}": {
+
+        "/accounts/sender_numbers": {
             "get": {
                 "security": [
                     {
@@ -1559,6 +1555,17 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.RentNumberRequest": {
+            "type": "object",
+            "properties": {
+                "SubscriptionNumberPackageID": {
+                    "type": "integer"
+                },
+                "senderNumberID": {
+                    "type": "integer"
                 }
             }
         },

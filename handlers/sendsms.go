@@ -126,8 +126,9 @@ func SendMessageToPhoneBooks(
 		return err
 	}
 
-	haveAccountBudget := DoesAcountHaveBudget(
-		smsCost, len(phoneBookNumbers), body.Account.Budget,
+	cost := int64(smsCost * len(phoneBookNumbers))
+	haveAccountBudget := utils.DoesAcountHaveBudget(
+		body.Account.Budget, cost,
 	)
 	if !haveAccountBudget {
 		return AcountDoesNotHaveBudgetError{Message: "You don't have enough budget!"}
@@ -136,7 +137,8 @@ func SendMessageToPhoneBooks(
 	// send message
 	statusOfMessages := make(chan SendMessageStatus, len(phoneBookNumbers))
 	for messageID, phoneNumber := range phoneBookNumbers {
-		if !DoesAcountHaveBudget(smsCost, 1, body.Account.Budget) {
+		cost := smsCost
+		if !utils.DoesAcountHaveBudget(body.Account.Budget, int64(cost)) {
 			return AcountDoesNotHaveBudgetError{Message: "You don't have enough budget!"}
 		}
 		message := CreateSMSTemplate(body.Message, phoneNumber)
@@ -252,3 +254,4 @@ func SendGroupMessage(
 func DoesAcountHaveBudget(smsCost int, smsCounts int, budget int64) bool {
 	return budget > int64(smsCost*smsCounts)
 }
+
