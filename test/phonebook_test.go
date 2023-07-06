@@ -50,7 +50,7 @@ func TestCreatePhoneBook(t *testing.T) {
 
 	e := echo.New()
 
-	t.Run("Create Phone Book Success", func(t *testing.T) {
+	t.Run("CreatePhoneBookSuccess", func(t *testing.T) {
 		requestBody := handlers.PhoneBookRequest{
 			AccountID: account.ID,
 			Name:      "Test Phone Book",
@@ -62,6 +62,7 @@ func TestCreatePhoneBook(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		ctx := e.NewContext(req, rec)
+		ctx.Set("account", account)
 
 		err := handler.CreatePhoneBook(ctx)
 		log.Println(rec.Body.String())
@@ -89,6 +90,7 @@ func TestCreatePhoneBook(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req.Header.Set("Content-Type", "application/json")
 		ctx := e.NewContext(req, rec)
+		ctx.Set("account", account)
 
 		err := handler.CreatePhoneBook(ctx)
 		log.Println(rec.Body.String())
@@ -138,6 +140,7 @@ func TestGetAllPhoneBooks(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 	ctx.SetParamNames("accountID")
 	ctx.SetParamValues(fmt.Sprint(account.ID))
+	ctx.Set("account", account)
 
 	err = handler.GetAllPhoneBooks(ctx)
 
@@ -198,6 +201,7 @@ func TestReadPhoneBook(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 	ctx.SetParamNames("accountID", "phoneBookID")
 	ctx.SetParamValues(fmt.Sprint(accountID), fmt.Sprint(phoneBookID))
+	ctx.Set("account", account)
 
 	err = handler.ReadPhoneBook(ctx)
 
@@ -258,6 +262,7 @@ func TestUpdatePhoneBook(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 	ctx.SetParamNames("accountID", "phoneBookID")
 	ctx.SetParamValues(fmt.Sprint(accountID), fmt.Sprint(phoneBookID))
+	ctx.Set("account", account)
 
 	err = handler.UpdatePhoneBook(ctx)
 
@@ -310,6 +315,7 @@ func TestDeletePhoneBook(t *testing.T) {
 		ctx := e.NewContext(req, rec)
 		ctx.SetParamNames("accountID", "phoneBookID")
 		ctx.SetParamValues(strconv.Itoa(int(account.ID)), strconv.Itoa(int(phoneBook.ID)))
+		ctx.Set("account", account)
 
 		err := handler.DeletePhoneBook(ctx)
 		assert.NoError(t, err)
@@ -329,6 +335,7 @@ func TestDeletePhoneBook(t *testing.T) {
 		ctx := e.NewContext(req, rec)
 		ctx.SetParamNames("accountID", "phoneBookID")
 		ctx.SetParamValues(strconv.Itoa(int(account.ID)), "999")
+		ctx.Set("account", account)
 
 		err := handler.DeletePhoneBook(ctx)
 		assert.NoError(t, err)

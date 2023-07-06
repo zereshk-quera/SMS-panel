@@ -26,6 +26,6 @@ func accountRoutes(e *echo.Echo) {
 	e.POST("/accounts/login", WithDBConnection(handlers.LoginHandler))
 	e.POST("/accounts/register", WithDBConnection(handlers.RegisterHandler))
 	e.GET("/accounts/budget", handlers.BudgetAmountHandler, middlewares.IsLoggedIn)
-	e.POST("/accounts/rent_number", handler.RentNumberHandler, middlewares.IsLoggedIn)
-	e.GET("/accounts/sender_numbers", handler.GetAllSenderNumbersHandler, middlewares.IsLoggedIn)
+	// e.POST("/accounts/rent_number", handler.RentNumberHandler, middlewares.IsLoggedIn)
+	// e.GET("/accounts/sender_numbers", handler.GetAllSenderNumbersHandler, middlewares.IsLoggedIn)
 }
