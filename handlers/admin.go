@@ -49,7 +49,6 @@ type ConfigurationRequest struct {
 // @Failure 502 {object} ErrorResponse "Can't connect to the database"
 // @Router /admin/register [post]
 func AdminRegisterHandler(c echo.Context, db *gorm.DB) error {
-	log.Println("env admin pass is *************************** ", os.Getenv("ADMIN_PASSWORD"))
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)

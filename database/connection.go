@@ -3,13 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
-	"os"
-	"time"
 
-	"SMS-panel/models"
-
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -44,37 +38,5 @@ func GetConnection() (*gorm.DB, error) {
 			return nil, errors.New("database connection is not initialized")
 		}
 	}
-	// check super admin existence
-	var account models.Account
-	dbConn.Where("id = ?", 1).First(&account)
-
-	// initial super admin
-	if account.ID == 0 {
-		var user models.User
-		user.FirstName = "admin"
-		user.LastName = "admin"
-		user.Phone = "admin"
-		user.Email = "admin"
-		user.NationalID = "admin"
-		dbConn.Save(&user)
-		var adminAccount models.Account
-		adminAccount.UserID = 1
-		adminAccount.Budget = 0
-		adminAccount.IsActive = true
-		adminAccount.IsAdmin = true
-		adminAccount.Username = "admin"
-		// save hashed password
-		hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		adminAccount.Password = string(hash)
-		// Generate Token
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"id":  1,
-			"exp": time.Now().Add(time.Hour).Unix(),
-		})
-		tokenString, _ := token.SignedString([]byte(os.Getenv("SECRET")))
-		adminAccount.Token = tokenString
-		dbConn.Save(&adminAccount)
-	}
-
 	return dbConn, nil
 }

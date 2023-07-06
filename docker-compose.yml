@@ -32,10 +32,11 @@ services:
       - .env
     command: >
       sh -c "
-        migrate -path database/migrations -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSLMODE}" up;
-        go run main.go;
+        migrate -path database/migrations -database 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSLMODE}' up &&
+        chmod +x scripts/initialize_example_data.sh &&
+        ./scripts/initialize_example_data.sh &&
+        go run main.go
       "
     depends_on:
       db:
         condition: "service_healthy"
-  
