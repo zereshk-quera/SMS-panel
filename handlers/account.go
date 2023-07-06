@@ -50,6 +50,18 @@ type BudgetAmountResponse struct {
 	Amount int `json:"amount"`
 }
 
+type SenderNumbersResponse struct {
+	Numbers []string `json:"numbers"`
+}
+
+type AccountHandler struct {
+	db *gorm.DB
+}
+
+func NewAccountHandler(db *gorm.DB) *AccountHandler {
+	return &AccountHandler{db: db}
+}
+
 // @Summary Register a new user
 // @Description Register a new user with the provided information
 // @Tags users
@@ -160,7 +172,6 @@ func BudgetAmountHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-
 // GetAllSenderNumbersHandler retrieves All sender numbers available for the account
 // @Summary Get All sender numbers
 // @Description retrieves All sender numbers available for the account
@@ -190,7 +201,6 @@ func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, SenderNumbersResponse{Numbers: senderNumbers})
-
 }
 
 // @Summary Rent number

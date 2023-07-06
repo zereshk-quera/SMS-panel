@@ -166,6 +166,13 @@ definitions:
     - phoneBooks
     - senderNumbers
     type: object
+  handlers.SenderNumbersResponse:
+    properties:
+      numbers:
+        items:
+          type: string
+        type: array
+    type: object
   handlers.UpdatePhoneBookNumberRequest:
     properties:
       name:
@@ -723,6 +730,59 @@ paths:
       summary: Register a new user
       tags:
       - users
+  /accounts/rent_number:
+    post:
+      consumes:
+      - application/json
+      description: Rent available number for this account
+      parameters:
+      - description: Get sender number and subscription package.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RentNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Rent number
+      tags:
+      - users
+  /accounts/sender_numbers:
+    get:
+      description: retrieves All sender numbers available for the account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SenderNumbersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get All sender numbers
+      tags:
+      - users
   /admin/activate/{id}:
     patch:
       consumes:
@@ -806,14 +866,6 @@ paths:
       description: Create a new configuration entry
       parameters:
       - description: Configuration object to be added
-
-  /accounts/rent_number:
-    post:
-      consumes:
-      - application/json
-      description: Rent available number for this account
-      parameters:
-      - description: Get sender number and subscription package.
         in: body
         name: config
         required: true
@@ -824,7 +876,6 @@ paths:
         name: Authorization
         required: true
         type: string
-          $ref: '#/definitions/handlers.RentNumberRequest'
       produces:
       - application/json
       responses:
@@ -913,19 +964,6 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
       summary: Admin login
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Rent number
       tags:
       - admin
   /admin/register:

@@ -737,6 +737,89 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/rent_number": {
+            "post": {
+                "description": "Rent available number for this account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Rent number",
+                "parameters": [
+                    {
+                        "description": "Get sender number and subscription package.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RentNumberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/sender_numbers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "retrieves All sender numbers available for the account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get All sender numbers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SenderNumbersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/activate/{id}": {
             "patch": {
                 "security": [
@@ -801,10 +884,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Add a new bad word to the database",
-
-        "/accounts/rent_number": {
-            "post": {
-                "description": "Rent available number for this account",
                 "consumes": [
                     "application/json"
                 ],
@@ -893,19 +972,6 @@ const docTemplate = `{
                         "name": "Authorization",
                         "in": "header",
                         "required": true
-
-                    "users"
-                ],
-                "summary": "Rent number",
-                "parameters": [
-                    {
-                        "description": "Get sender number and subscription package.",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.RentNumberRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -981,11 +1047,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.Response"
-
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "400": {
@@ -1089,7 +1150,6 @@ const docTemplate = `{
                     "422": {
                         "description": "Username already exists",
                         "schema": {
-
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
@@ -1101,7 +1161,6 @@ const docTemplate = `{
                     },
                     "502": {
                         "description": "Can't connect to the database",
-                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -1110,8 +1169,6 @@ const docTemplate = `{
             }
         },
         "/admin/search/{word}": {
-
-        "/accounts/sender_numbers": {
             "get": {
                 "security": [
                     {
@@ -1657,6 +1714,17 @@ const docTemplate = `{
                 },
                 "senderNumbers": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.SenderNumbersResponse": {
+            "type": "object",
+            "properties": {
+                "numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

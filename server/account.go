@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 func WithDBConnection(handlerFunc func(c echo.Context, db *gorm.DB) error) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		dbConn, err := database.GetConnection()
