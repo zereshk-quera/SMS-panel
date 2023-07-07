@@ -8,5 +8,5 @@ type SenderNumber struct {
 }
 
 func (SenderNumber) TableName() string {
-    return "sender_numbers"
+	return "sender_numbers"
 }

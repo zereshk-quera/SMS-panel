@@ -3,242 +3,344 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
-	database "SMS-panel/database"
 	"SMS-panel/handlers"
 	"SMS-panel/models"
+	"SMS-panel/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
-func init() {
-	e = echo.New()
-	db, err := database.GetConnection()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	phonebookHandler = handlers.NewPhonebookHandler(db)
-}
-
 func TestCreatePhoneBook(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		phoneBookReq := handlers.PhoneBookRequest{
+	db, err := utils.CreateTestDatabase()
+	defer utils.CloseTestDatabase(db)
+	assert.NoError(t, err)
+
+	handler := handlers.NewPhonebookHandler(db)
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
+
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   10,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
+
+	e := echo.New()
+
+	t.Run("CreatePhoneBookSuccess", func(t *testing.T) {
+		requestBody := handlers.PhoneBookRequest{
 			AccountID: account.ID,
-			Name:      "John Doe",
+			Name:      "Test Phone Book",
 		}
 
-		reqBody, err := json.Marshal(phoneBookReq)
-		assert.NoError(t, err)
+		jsonBody, _ := json.Marshal(requestBody)
 
-		req := httptest.NewRequest(http.MethodPost, "/account/phone-books/", bytes.NewReader(reqBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req := httptest.NewRequest(http.MethodPost, "/account/phone-books", bytes.NewReader(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+		ctx := e.NewContext(req, rec)
+		ctx.Set("account", account)
 
-		err = phonebookHandler.CreatePhoneBook(c)
+		err := handler.CreatePhoneBook(ctx)
+		log.Println(rec.Body.String())
+
 		assert.NoError(t, err)
-
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		var phoneBookRes handlers.PhoneBookResponse
-		err = json.Unmarshal(rec.Body.Bytes(), &phoneBookRes)
+		var response handlers.PhoneBookResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
-		assert.Equal(t, phoneBookReq.AccountID, phoneBookRes.AccountID)
-		assert.Equal(t, phoneBookReq.Name, phoneBookRes.Name)
+		// Assert the response
+		assert.Equal(t, requestBody.AccountID, response.AccountID)
+		assert.Equal(t, requestBody.Name, response.Name)
 	})
-
-	t.Run("MissingName", func(t *testing.T) {
-		phoneBookReq := handlers.PhoneBookRequest{
+	t.Run("CreatePhoneBookNameMissing", func(t *testing.T) {
+		requestBody := handlers.PhoneBookRequest{
 			AccountID: account.ID,
+			Name:      "",
 		}
 
-		reqBody, err := json.Marshal(phoneBookReq)
-		assert.NoError(t, err)
+		jsonBody, _ := json.Marshal(requestBody)
 
-		req := httptest.NewRequest(http.MethodPost, "/account/phone-books/", bytes.NewReader(reqBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req := httptest.NewRequest(http.MethodPost, "/account/phone-books", bytes.NewReader(jsonBody))
 		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+		req.Header.Set("Content-Type", "application/json")
+		ctx := e.NewContext(req, rec)
+		ctx.Set("account", account)
 
-		err = phonebookHandler.CreatePhoneBook(c)
+		err := handler.CreatePhoneBook(ctx)
+		log.Println(rec.Body.String())
+
 		assert.NoError(t, err)
-
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-
-		var errorRes map[string]string
-		err = json.Unmarshal(rec.Body.Bytes(), &errorRes)
-		assert.NoError(t, err)
-
-		assert.Equal(t, "Name is required", errorRes["error"])
+		assert.Equal(t, `{"error":"Name is required"}`, strings.TrimSpace(rec.Body.String()))
 	})
 }
 
 func TestGetAllPhoneBooks(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/account/phone-books/"+fmt.Sprint(account.ID), nil)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID")
-		c.SetParamValues(fmt.Sprint(account.ID))
+	db, err := utils.CreateTestDatabase()
+	defer utils.CloseTestDatabase(db)
+	assert.NoError(t, err)
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
 
-		err := phonebookHandler.GetAllPhoneBooks(c)
-		assert.NoError(t, err)
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   10,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
+	handler := handlers.NewPhonebookHandler(db)
 
-		assert.Equal(t, http.StatusOK, rec.Code)
+	phoneBooks := []models.PhoneBook{
+		{AccountID: account.ID, Name: "Phone Book 1"},
+		{AccountID: account.ID, Name: "Phone Book 2"},
+	}
+	err = db.Create(&phoneBooks).Error
+	assert.NoError(t, err)
 
-		var phoneBooks []models.PhoneBook
-		err = json.Unmarshal(rec.Body.Bytes(), &phoneBooks)
-		assert.NoError(t, err)
-		assert.Equal(t, phoneBookID, phoneBooks[0].ID)
-		assert.Equal(t, account.ID, phoneBooks[0].AccountID)
-		assert.Equal(t, "John Doe", phoneBooks[0].Name)
-	})
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/account/"+fmt.Sprint(account.ID)+"/phone-books/", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetParamNames("accountID")
+	ctx.SetParamValues(fmt.Sprint(account.ID))
+	ctx.Set("account", account)
+
+	err = handler.GetAllPhoneBooks(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response []handlers.PhoneBookResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Len(t, response, 2)
+	assert.Equal(t, uint(1), response[0].ID)
+	assert.Equal(t, uint(account.ID), response[0].AccountID)
+	assert.Equal(t, "Phone Book 1", response[0].Name)
+	assert.Equal(t, uint(2), response[1].ID)
+	assert.Equal(t, uint(account.ID), response[1].AccountID)
+	assert.Equal(t, "Phone Book 2", response[1].Name)
 }
 
 func TestReadPhoneBook(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, phoneBookID), nil)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID", "phoneBookID")
-		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(phoneBookID))
+	db, err := utils.CreateTestDatabase()
+	defer utils.CloseTestDatabase(db)
+	assert.NoError(t, err)
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
 
-		err := phonebookHandler.ReadPhoneBook(c)
-		assert.NoError(t, err)
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   10,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
 
-		assert.Equal(t, http.StatusOK, rec.Code)
+	handler := handlers.NewPhonebookHandler(db)
+	accountID := account.ID
 
-		var phoneBook models.PhoneBook
-		err = json.Unmarshal(rec.Body.Bytes(), &phoneBook)
-		assert.NoError(t, err)
+	phoneBook := models.PhoneBook{
+		AccountID: account.ID,
+		Name:      "Phone Book 1",
+	}
+	err = db.Create(&phoneBook).Error
+	assert.NoError(t, err)
+	phoneBookID := phoneBook.ID
 
-		assert.Equal(t, phoneBookID, phoneBook.ID)
-		assert.Equal(t, account.ID, phoneBook.AccountID)
-		assert.Equal(t, "John Doe", phoneBook.Name)
-	})
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/account/"+fmt.Sprint(accountID)+"/phone-books/"+fmt.Sprint(phoneBookID), nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetParamNames("accountID", "phoneBookID")
+	ctx.SetParamValues(fmt.Sprint(accountID), fmt.Sprint(phoneBookID))
+	ctx.Set("account", account)
 
-	t.Run("NotFound", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, 99999), nil)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID", "phoneBookID")
-		c.SetParamValues(fmt.Sprint(account.ID), "99999")
+	err = handler.ReadPhoneBook(ctx)
 
-		err := phonebookHandler.ReadPhoneBook(c)
-		assert.NoError(t, err)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
-		assert.Equal(t, http.StatusNotFound, rec.Code)
-
-		var errorMessage string
-		err = json.Unmarshal(rec.Body.Bytes(), &errorMessage)
-		assert.NoError(t, err)
-
-		assert.Equal(t, "Phonebook not found", errorMessage)
-	})
+	var response handlers.PhoneBookResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, uint(phoneBookID), response.ID)
+	assert.Equal(t, uint(accountID), response.AccountID)
+	assert.Equal(t, "Phone Book 1", response.Name)
 }
 
 func TestUpdatePhoneBook(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		phoneBookReq := handlers.PhoneBookRequest{
-			AccountID: account.ID,
-			Name:      "Updated Name",
-		}
+	db, err := utils.CreateTestDatabase()
+	defer utils.CloseTestDatabase(db)
+	assert.NoError(t, err)
+	user := models.User{
+		FirstName:  "john",
+		LastName:   "doe",
+		Phone:      "09376304339",
+		Email:      "test@gmail.com",
+		NationalID: "123456789",
+	}
+	err = db.Create(&user).Error
+	assert.NoError(t, err)
 
-		reqBody, err := json.Marshal(phoneBookReq)
-		assert.NoError(t, err)
+	account := models.Account{
+		UserID:   user.ID,
+		Username: "testuser",
+		Budget:   10,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	handler := handlers.NewPhonebookHandler(db)
+	accountID := account.ID
 
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, phoneBookID), bytes.NewReader(reqBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID", "phoneBookID")
-		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(phoneBookID))
+	phoneBook := models.PhoneBook{
+		AccountID: accountID,
+		Name:      "Phone Book 1",
+	}
+	err = db.Create(&phoneBook).Error
+	assert.NoError(t, err)
+	phoneBookID := phoneBook.ID
 
-		err = phonebookHandler.UpdatePhoneBook(c)
-		assert.NoError(t, err)
+	e := echo.New()
 
-		assert.Equal(t, http.StatusOK, rec.Code)
+	updateData := map[string]interface{}{
+		"name": "Updated Phone Book",
+	}
+	updateJSON, _ := json.Marshal(updateData)
 
-		var phoneBookRes handlers.PhoneBookResponse
-		err = json.Unmarshal(rec.Body.Bytes(), &phoneBookRes)
-		assert.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPut, "/account/"+fmt.Sprint(accountID)+"/phone-books/"+fmt.Sprint(phoneBookID), bytes.NewReader(updateJSON))
+	rec := httptest.NewRecorder()
+	req.Header.Set("Content-Type", "application/json")
+	ctx := e.NewContext(req, rec)
+	ctx.SetParamNames("accountID", "phoneBookID")
+	ctx.SetParamValues(fmt.Sprint(accountID), fmt.Sprint(phoneBookID))
+	ctx.Set("account", account)
 
-		assert.Equal(t, phoneBookReq.AccountID, phoneBookRes.AccountID)
-		assert.Equal(t, phoneBookID, phoneBookRes.ID)
-		assert.Equal(t, phoneBookReq.Name, phoneBookRes.Name)
-	})
+	err = handler.UpdatePhoneBook(ctx)
 
-	t.Run("NotFound", func(t *testing.T) {
-		phoneBookReq := handlers.PhoneBookRequest{
-			AccountID: account.ID,
-			Name:      "Updated Name",
-		}
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
-		reqBody, err := json.Marshal(phoneBookReq)
-		assert.NoError(t, err)
+	var response handlers.PhoneBookResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, uint(phoneBookID), response.ID)
+	assert.Equal(t, uint(accountID), response.AccountID)
+	assert.Equal(t, "Updated Phone Book", response.Name)
 
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, 99999), bytes.NewReader(reqBody))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID", "phoneBookID")
-		c.SetParamValues(fmt.Sprint(account.ID), "99999")
-
-		err = phonebookHandler.UpdatePhoneBook(c)
-		assert.NoError(t, err)
-
-		assert.Equal(t, http.StatusNotFound, rec.Code)
-
-		var errorMessage string
-		err = json.Unmarshal(rec.Body.Bytes(), &errorMessage)
-		assert.NoError(t, err)
-
-		assert.Equal(t, "Phonebook not found", errorMessage)
-	})
+	var updatedPhoneBook models.PhoneBook
+	err = db.Where("id = ?", phoneBook.ID).First(&updatedPhoneBook).Error
+	assert.NoError(t, err)
+	assert.Equal(t, "Updated Phone Book", updatedPhoneBook.Name)
 }
 
 func TestDeletePhoneBook(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, phoneBookID), nil)
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID", "phoneBookID")
-		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(phoneBookID))
+	db, err := utils.CreateTestDatabase()
+	defer utils.CloseTestDatabase(db)
+	assert.NoError(t, err)
 
-		err := phonebookHandler.DeletePhoneBook(c)
+	handler := handlers.NewPhonebookHandler(db)
+
+	account := models.Account{
+		UserID:   1,
+		Username: "testuser",
+		Budget:   10,
+		Password: "password",
+		IsActive: true,
+		IsAdmin:  false,
+	}
+	err = db.Create(&account).Error
+	assert.NoError(t, err)
+
+	phoneBook := models.PhoneBook{
+		AccountID: account.ID,
+		Name:      "Test Phone Book",
+	}
+	err = db.Create(&phoneBook).Error
+	assert.NoError(t, err)
+
+	e := echo.New()
+
+	t.Run("DeletePhoneBookSuccess", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/account/"+strconv.Itoa(int(account.ID))+"/phone-books/"+strconv.Itoa(int(phoneBook.ID)), nil)
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(req, rec)
+		ctx.SetParamNames("accountID", "phoneBookID")
+		ctx.SetParamValues(strconv.Itoa(int(account.ID)), strconv.Itoa(int(phoneBook.ID)))
+		ctx.Set("account", account)
+
+		err := handler.DeletePhoneBook(ctx)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "\"Phone book deleted\"\n", rec.Body.String())
 
-		expectedResponseBody := "\"Phone book deleted\""
-		actualResponseBody := strings.TrimSpace(rec.Body.String())
-		assert.Equal(t, expectedResponseBody, actualResponseBody)
+		var deletedPhoneBook models.PhoneBook
+		result := db.First(&deletedPhoneBook, phoneBook.ID)
+		assert.Error(t, result.Error)
+		assert.True(t, errors.Is(result.Error, gorm.ErrRecordNotFound))
 	})
 
-	t.Run("NotFound", func(t *testing.T) {
-		nonExistentPhoneBookID := phoneBookID + 100
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/account/%d/phone-books/%d", account.ID, nonExistentPhoneBookID), nil)
+	t.Run("DeletePhoneBookNotFound", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/account/"+strconv.Itoa(int(account.ID))+"/phone-books/999", nil)
 		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		c.SetParamNames("accountID", "phoneBookID")
-		c.SetParamValues(fmt.Sprint(account.ID), fmt.Sprint(nonExistentPhoneBookID))
+		ctx := e.NewContext(req, rec)
+		ctx.SetParamNames("accountID", "phoneBookID")
+		ctx.SetParamValues(strconv.Itoa(int(account.ID)), "999")
+		ctx.Set("account", account)
 
-		err := phonebookHandler.DeletePhoneBook(c)
+		err := handler.DeletePhoneBook(ctx)
 		assert.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
-
-		expectedResponseBody := "\"Phone book not found\""
-		actualResponseBody := strings.TrimSpace(rec.Body.String())
-		assert.Equal(t, expectedResponseBody, actualResponseBody)
+		assert.Equal(t, "\"Phone book not found\"", strings.TrimSpace(rec.Body.String()))
 	})
 }

@@ -68,12 +68,12 @@ func NewAccountHandler(db *gorm.DB) *AccountHandler {
 // @Accept json
 // @Produce json
 // @Param body body UserCreateRequest true "User registration details"
-// @Success 201 {object} AccountResponse
+// @Success 200 {object} AccountResponse
 // @Failure 400 {object} ErrorResponseRegisterLogin
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Failure 500 {object} ErrorResponseRegisterLogin
 // @Router /accounts/register [post]
-func (a AccountHandler) RegisterHandler(c echo.Context) error {
+func RegisterHandler(c echo.Context, dbConn *gorm.DB) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -81,37 +81,37 @@ func (a AccountHandler) RegisterHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	//check json format
+	// check json format
 	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "firstname", "lastname", "email", "phone", "nationalid", "username", "password")
 	if jsonFormatErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	//check user validation
+	// check user validation
 	userFormatValidationMsg, user, userFormatErr := utils.ValidateUser(jsonBody)
 	if userFormatErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: userFormatValidationMsg})
 	}
 
-	//check unique
-	userUniqueMsg, userUniqueErr := utils.CheckUnique(user, jsonBody["username"].(string), a.db)
+	// check unique
+	userUniqueMsg, userUniqueErr := utils.CheckUnique(user, jsonBody["username"].(string), dbConn)
 	if userUniqueErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: userUniqueMsg})
 	}
 
 	// Insert User Object Into Database
-	createdUser := a.db.Create(&user)
+	createdUser := dbConn.Create(&user)
 	if createdUser.Error != nil {
-		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "User Cration Failed"})
+		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "User Creation Failed"})
 	}
 
-	//create account
-	accountCreationMsg, account, accountCreationErr := utils.CreateAccount(int(user.ID), jsonBody["username"].(string), false, jsonBody["password"].(string), a.db)
+	// create account
+	accountCreationMsg, account, accountCreationErr := utils.CreateAccount(int(user.ID), jsonBody["username"].(string), false, jsonBody["password"].(string), dbConn)
 	if accountCreationErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: accountCreationMsg})
 	}
 
-	return c.JSON(http.StatusOK, account)
+	return c.JSON(http.StatusCreated, account)
 }
 
 // LoginHandler handles user login
@@ -125,7 +125,7 @@ func (a AccountHandler) RegisterHandler(c echo.Context) error {
 // @Failure 400 {object} ErrorResponseRegisterLogin
 // @Failure 422 {object} ErrorResponseRegisterLogin
 // @Router  /accounts/login [post]
-func (a AccountHandler) LoginHandler(c echo.Context) error {
+func LoginHandler(c echo.Context, db *gorm.DB) error {
 	// Read Request Body
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
@@ -133,14 +133,14 @@ func (a AccountHandler) LoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Invalid JSON"})
 	}
 
-	//check json format
+	// check json format
 	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "username", "password")
 	if jsonFormatErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	//find account based on username and check password correction
-	findAccountMsg, account, findAccountErr := utils.Login(jsonBody["username"].(string), jsonBody["password"].(string), false, a.db)
+	// find account based on username and check password correction
+	findAccountMsg, account, findAccountErr := utils.Login(jsonBody["username"].(string), jsonBody["password"].(string), false, db)
 	if findAccountErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: findAccountMsg})
 	}
@@ -154,10 +154,11 @@ func (a AccountHandler) LoginHandler(c echo.Context) error {
 // @Tags users
 // @Security ApiKeyAuth
 // @Produce json
+// @Param Authorization header string true "User Token"
 // @Success 200 {object} BudgetAmountResponse
 // @Failure 401 {string} string
-// @Router /accounts/budget	 [get]
-func (a AccountHandler) BudgetAmountHandler(c echo.Context) error {
+// @Router /accounts/budget [get]
+func BudgetAmountHandler(c echo.Context) error {
 	// Recieve Account Object
 	account := c.Get("account")
 
@@ -165,9 +166,7 @@ func (a AccountHandler) BudgetAmountHandler(c echo.Context) error {
 	budget := int(account.(models.Account).Budget)
 
 	// Create Result Object
-	res := struct {
-		Amount int `json:"amount"`
-	}{
+	res := BudgetAmountResponse{
 		Amount: budget,
 	}
 	return c.JSON(http.StatusOK, res)
@@ -202,7 +201,6 @@ func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, SenderNumbersResponse{Numbers: senderNumbers})
-
 }
 
 // @Summary Rent number

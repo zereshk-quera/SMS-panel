@@ -250,3 +250,8 @@ func SendGroupMessage(
 	)
 	ch <- SendMessageStatus{ID: messageID, Status: true}
 }
+
+func DoesAcountHaveBudget(smsCost int, smsCounts int, budget int64) bool {
+	return budget > int64(smsCost*smsCounts)
+}
+

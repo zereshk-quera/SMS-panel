@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"SMS-panel/models"
-	"SMS-panel/utils"
 	"errors"
 	"net/http"
+
+	"SMS-panel/models"
+	"SMS-panel/utils"
 
 	echo "github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -30,6 +31,8 @@ type UpdatePhoneBookNumberRequest struct {
 // @Router /account/phone-books/phone-book-numbers [post]
 func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 	phoneBookNumber := models.PhoneBookNumber{}
+	account := c.Get("account").(models.Account)
+	phoneBookNumber.PhoneBook.AccountID = account.ID
 
 	if err := c.Bind(&phoneBookNumber); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -40,6 +43,9 @@ func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 
 	if phoneBookNumber.Phone == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Phone is required"})
+	}
+	if phoneBookNumber.PhoneBookID == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "phone book is required"})
 	}
 
 	// Check Phone Number Validation

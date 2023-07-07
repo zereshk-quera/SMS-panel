@@ -17,6 +17,23 @@ definitions:
       Username:
         type: string
     type: object
+  handlers.AdminRegistrationRequest:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      nationalid:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
   handlers.AmountFee:
     properties:
       fee:
@@ -26,6 +43,15 @@ definitions:
     properties:
       amount:
         type: integer
+    type: object
+  handlers.ConfigurationRequest:
+    properties:
+      name:
+        example: config_name
+        type: string
+      value:
+        example: 42
+        type: number
     type: object
   handlers.ErrorResponse:
     properties:
@@ -100,6 +126,25 @@ definitions:
     required:
     - senderNumbers
     type: object
+  handlers.SendSMSRequestPeriodic:
+    properties:
+      interval:
+        type: string
+      message:
+        type: string
+      phone:
+        type: string
+      phone_book_id:
+        type: string
+      schedule:
+        type: string
+      senderNumbers:
+        type: string
+      username:
+        type: string
+    required:
+    - senderNumbers
+    type: object
   handlers.SendSMSResponse:
     properties:
       message:
@@ -159,6 +204,15 @@ definitions:
       Authority:
         type: string
       Status:
+        type: string
+    type: object
+  models.Bad_Word:
+    properties:
+      id:
+        type: integer
+      regex:
+        type: string
+      word:
         type: string
     type: object
   models.PhoneBook:
@@ -512,6 +566,12 @@ paths:
   /accounts/budget:
     get:
       description: Get the budget amount for the logged-in user
+      parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -564,6 +624,11 @@ paths:
       - application/json
       description: Zarinpal Payment to add budget to account
       parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Payment request details
         in: body
         name: body
@@ -598,6 +663,11 @@ paths:
       - application/json
       description: Verify Zarinpal Payment to add budget to account
       parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Payment verify details
         in: body
         name: body
@@ -641,8 +711,8 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
             $ref: '#/definitions/handlers.AccountResponse'
         "400":
@@ -713,6 +783,336 @@ paths:
       summary: Get All sender numbers
       tags:
       - users
+  /admin/activate/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Activates the specified account.
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Activate Account
+      tags:
+      - admin
+  /admin/add-bad-word/{word}:
+    post:
+      consumes:
+      - application/json
+      description: Add a new bad word to the database
+      parameters:
+      - description: Word to add as a bad word
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Bad_Word'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Add a bad word
+      tags:
+      - admin
+  /admin/add-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a new configuration entry
+      parameters:
+      - description: Configuration object to be added
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ConfigurationRequest'
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Configuration
+      tags:
+      - admin
+  /admin/deactivate/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Deactivates the specified account.
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Deactivate Account
+      tags:
+      - admin
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in an admin user.
+      parameters:
+      - description: Login Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Admin login
+      tags:
+      - admin
+  /admin/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new admin with the provided details
+      parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Admin registration details
+        in: body
+        name: adminRegistrationRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AdminRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin account created successfully
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "422":
+          description: Username already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: User creation failed
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "502":
+          description: Can't connect to the database
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Register a new admin
+      tags:
+      - admin
+  /admin/search/{word}:
+    get:
+      consumes:
+      - application/json
+      description: Search for SMS messages containing a specific word
+      parameters:
+      - description: Word to search for in SMS messages
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Search SMS Messages
+      tags:
+      - admin
+  /admin/sms-report:
+    get:
+      description: Retrieve the SMS report with the number of messages per account
+      parameters:
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get SMS Report
+      tags:
+      - admin
+  /sms/periodic-sms:
+    post:
+      consumes:
+      - application/json
+      description: Send periodic SMS messages with specified schedule and interval
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: SMS message details
+        in: body
+        name: sendSMSRequestPeriodic
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendSMSRequestPeriodic'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMS scheduled successfully
+          schema:
+            type: string
+        "400":
+          description: Insufficient budget
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Send periodic SMS messages
+      tags:
+      - messages
   /sms/phonebooks:
     post:
       consumes:
@@ -751,16 +1151,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Sends a single SMS message and saves the result in the SMSMessage
-        table
+      description: Send a single SMS message
       parameters:
-      - default: '"account_token"'
-        description: account_token
+      - description: Authorization Token
         in: header
-        name: Cookie
+        name: Authorization
         required: true
         type: string
-      - description: Request body for sending an SMS message
+      - description: SMS message details
         in: body
         name: sendSMSRequest
         required: true
@@ -777,15 +1175,25 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponseSingle'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponseSingle'
-      summary: Send Single SMS
+      security:
+      - ApiKeyAuth: []
+      summary: Send a single SMS message
       tags:
-      - SMS
+      - messages
 swagger: "2.0"

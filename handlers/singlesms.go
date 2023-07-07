@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 )
@@ -27,20 +27,23 @@ type ErrorResponseSingle struct {
 	Message string `json:"message"`
 }
 
-// SendSingleSMSHandler sends a single SMS message and saves the result in the SMSMessage table.
-// @Summary Send Single SMS
-// @Description Sends a single SMS message and saves the result in the SMSMessage table
-// @Tags SMS
+// SendSingleSMSHandler sends a single SMS message
+// @Summary Send a single SMS message
+// @Description Send a single SMS message
+// @Tags messages
+// @Security ApiKeyAuth
 // @Accept json
 // @Produce json
-// @Param Cookie header string true "account_token" default("account_token")
-// @Param sendSMSRequest body SendSMSRequest true "Request body for sending an SMS message"
+// @Param Authorization header string true "Authorization Token"
+// @Param sendSMSRequest body SendSMSRequest true "SMS message details"
 // @Success 200 {object} SendSMSResponse
 // @Failure 400 {object} ErrorResponseSingle
+// @Failure 401 {string} string
 // @Failure 403 {object} ErrorResponseSingle
+// @Failure 404 {object} ErrorResponseSingle
 // @Failure 500 {object} ErrorResponseSingle
 // @Router /sms/single-sms [post]
-func SendSingleSMSHandler(c echo.Context) error {
+func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	ctx := c.Request().Context()
 
@@ -60,16 +63,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, errResponse)
 	}
-
-	db, err := database.GetConnection()
-	if err != nil {
-		errResponse := ErrorResponseSingle{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, errResponse)
-	}
-
 	// Check if sender number is available
 	senderNumberExisted := utils.IsSenderNumberExist(
 		ctx, db, reqBody.SenderNumber, account.UserID,
@@ -154,7 +147,6 @@ func SendSingleSMSHandler(c echo.Context) error {
 		Source:      account.Username,
 		Destination: destination,
 	})
-
 	if err != nil {
 		tx.Rollback()
 		errResponse := ErrorResponseSingle{
