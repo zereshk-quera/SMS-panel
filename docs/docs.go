@@ -737,7 +737,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/accounts/rent_number": {
+        "/accounts/rent-number": {
             "post": {
                 "description": "Rent available number for this account",
                 "consumes": [
@@ -789,7 +789,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/accounts/sender_numbers": {
+        "/accounts/sender-numbers": {
             "get": {
                 "security": [
                     {
@@ -804,6 +804,37 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get All sender numbers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SenderNumbersResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/sender-numbers/sale": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "retrieves All sender numbers available for sale",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get All sender numbers for sale",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1618,11 +1649,11 @@ const docTemplate = `{
         "handlers.RentNumberRequest": {
             "type": "object",
             "properties": {
-                "SubscriptionNumberPackageID": {
-                    "type": "integer"
+                "SubscriptionNumberPackage": {
+                    "type": "string"
                 },
-                "senderNumberID": {
-                    "type": "integer"
+                "senderNumber": {
+                    "type": "string"
                 }
             }
         },
