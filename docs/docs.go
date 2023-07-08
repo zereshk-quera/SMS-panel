@@ -1618,11 +1618,11 @@ const docTemplate = `{
         "handlers.RentNumberRequest": {
             "type": "object",
             "properties": {
-                "SubscriptionNumberPackageID": {
-                    "type": "integer"
+                "SubscriptionNumberPackage": {
+                    "type": "string"
                 },
-                "senderNumberID": {
-                    "type": "integer"
+                "senderNumber": {
+                    "type": "string"
                 }
             }
         },

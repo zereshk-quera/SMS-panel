@@ -42,8 +42,8 @@ type LoginRequest struct {
 }
 
 type RentNumberRequest struct {
-	SenderNumberID              int `json:"senderNumberID"`
-	SubscriptionNumberPackageID int `json:"SubscriptionNumberPackageID"`
+	SenderNumber              string `json:"senderNumber"`
+	SubscriptionNumberPackage string `json:"SubscriptionNumberPackage"`
 }
 
 type BudgetAmountResponse struct {
@@ -181,12 +181,12 @@ func BudgetAmountHandler(c echo.Context) error {
 // @Success 200 {object} SenderNumbersResponse
 // @Failure 401 {string} string
 // @Router /accounts/sender_numbers	 [get]
-func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
+func GetAllSenderNumbersHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 
 	var senderNumbersObjects []models.SenderNumber
 
-	err := a.db.Model(&models.SenderNumber{}).
+	err := db.Model(&models.SenderNumber{}).
 		Select("sender_numbers.number").
 		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
 		Where("sender_numbers.is_default=true or (user_numbers.user_id = ? and user_numbers.is_available=true)",
@@ -214,7 +214,7 @@ func (a AccountHandler) GetAllSenderNumbersHandler(c echo.Context) error {
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /accounts/rent_number [post]
-func (a *AccountHandler) RentNumberHandler(c echo.Context) error {
+func RentNumberHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	body := RentNumberRequest{}
 	ctx := c.Request().Context()
@@ -229,12 +229,12 @@ func (a *AccountHandler) RentNumberHandler(c echo.Context) error {
 	// Check if sender number is available for this user
 	var senderNumbersObject models.SenderNumber
 
-	err := a.db.WithContext(ctx).WithContext(ctx).Model(&models.SenderNumber{}).
-		Select("sender_numbers.number").
+	err := db.WithContext(ctx).WithContext(ctx).Model(&models.SenderNumber{}).
+		Select("sender_numbers.id", "sender_numbers.number").
 		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
 		Where(
-			"sender_numbers.is_default=false and sender_numbers.is_exclusive=false and sender_numbers.id = ?",
-			body.SenderNumberID).
+			"sender_numbers.is_default=false and sender_numbers.is_exclusive=false and sender_numbers.number = ?",
+			body.SenderNumber).
 		First(&senderNumbersObject).Error
 	if err != nil {
 		log.Println(err)
@@ -243,9 +243,9 @@ func (a *AccountHandler) RentNumberHandler(c echo.Context) error {
 
 	// get the subscription number package
 	var subPackage models.SubscriptionNumberPackage
-	err = a.db.WithContext(ctx).First(
-		&subPackage, body.SubscriptionNumberPackageID,
-	).Error
+	err = db.WithContext(ctx).
+		Where("title = ?", body.SubscriptionNumberPackage).
+		First(&subPackage).Error
 	if err != nil {
 		errorResponse := ErrorResponse{Message: "Subscription package does not exist."}
 		return c.JSON(http.StatusNotFound, errorResponse)
@@ -267,7 +267,7 @@ func (a *AccountHandler) RentNumberHandler(c echo.Context) error {
 	}
 
 	// Save to database
-	tx := a.db.WithContext(ctx).Begin()
+	tx := db.WithContext(ctx).Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -281,7 +281,7 @@ func (a *AccountHandler) RentNumberHandler(c echo.Context) error {
 	startDate, endDate := subscriptionNumberPackage.GetTimePeriod()
 	userNumberObject := models.UserNumbers{
 		UserID:                account.UserID,
-		NumberID:              uint(body.SenderNumberID),
+		NumberID:              senderNumbersObject.ID,
 		StartDate:             startDate,
 		EndDate:               endDate,
 		IsAvailable:           true,
@@ -293,7 +293,7 @@ func (a *AccountHandler) RentNumberHandler(c echo.Context) error {
 	}
 
 	// Update senderNumber
-	err = tx.Model(&models.SenderNumber{}).Where("id = ?", body.SenderNumberID).
+	err = tx.Model(&models.SenderNumber{}).Where("id = ?", senderNumbersObject.ID).
 		Update("is_exclusive", true).
 		Error
 	if err != nil {
