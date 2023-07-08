@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"SMS-panel/models"
+	"SMS-panel/utils"
 	"log"
 	"time"
 
@@ -18,7 +19,10 @@ func RentNumberTask(db *gorm.DB) TaskFunc {
 		tx := db.Begin()
 
 		err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "number_id"}}}).
-			Where("user_numbers.end_date < ?", now).
+			Where(
+				"user_numbers.subscription_package_id != ? AND user_numbers.end_date < ?",
+				utils.SUBSCRIOPTION_PACKAGE_BUY_ID, now,
+			).
 			Delete(&userNumberObjects).Error
 		log.Println(userNumberObjects, "=====")
 		if err != nil || len(userNumberObjects) == 0 {

@@ -44,6 +44,11 @@ definitions:
       amount:
         type: integer
     type: object
+  handlers.BuyNumberRequest:
+    properties:
+      senderNumber:
+        type: string
+    type: object
   handlers.ConfigurationRequest:
     properties:
       name:
@@ -586,6 +591,40 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get budget amount
+      tags:
+      - users
+  /accounts/buy-number:
+    post:
+      consumes:
+      - application/json
+      description: Buy available number for this account
+      parameters:
+      - description: Get sender number and subscription package.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BuyNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Buy number
       tags:
       - users
   /accounts/login:
