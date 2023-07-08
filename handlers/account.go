@@ -180,7 +180,7 @@ func BudgetAmountHandler(c echo.Context) error {
 // @Produce json
 // @Success 200 {object} SenderNumbersResponse
 // @Failure 401 {string} string
-// @Router /accounts/sender_numbers	 [get]
+// @Router /accounts/sender-numbers	 [get]
 func GetAllSenderNumbersHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 
@@ -203,6 +203,33 @@ func GetAllSenderNumbersHandler(c echo.Context, db *gorm.DB) error {
 	return c.JSON(http.StatusOK, SenderNumbersResponse{Numbers: senderNumbers})
 }
 
+// GetAllSenderNumbersForSaleHandler retrieves All sender numbers available for sale
+// @Summary Get All sender numbers for sale
+// @Description retrieves All sender numbers available for sale
+// @Tags users
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 200 {object} SenderNumbersResponse
+// @Failure 401 {string} string
+// @Router /accounts/sender-numbers/sale	 [get]
+func GetAllSenderNumbersForSaleHandler(c echo.Context, db *gorm.DB) error {
+	var senderNumbersObjects []models.SenderNumber
+
+	err := db.Model(&models.SenderNumber{}).
+		Select("number").
+		Where("is_default = false AND is_exclusive=false").
+		Scan(&senderNumbersObjects).Error
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+	var senderNumbers []string
+	for _, n := range senderNumbersObjects {
+		senderNumbers = append(senderNumbers, n.Number)
+	}
+
+	return c.JSON(http.StatusOK, SenderNumbersResponse{Numbers: senderNumbers})
+}
+
 // @Summary Rent number
 // @Description Rent available number for this account
 // @Tags users
@@ -213,7 +240,7 @@ func GetAllSenderNumbersHandler(c echo.Context, db *gorm.DB) error {
 // @Failure 204 {object} ErrorResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /accounts/rent_number [post]
+// @Router /accounts/rent-number [post]
 func RentNumberHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	body := RentNumberRequest{}

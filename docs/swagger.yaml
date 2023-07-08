@@ -730,7 +730,7 @@ paths:
       summary: Register a new user
       tags:
       - users
-  /accounts/rent_number:
+  /accounts/rent-number:
     post:
       consumes:
       - application/json
@@ -764,7 +764,7 @@ paths:
       summary: Rent number
       tags:
       - users
-  /accounts/sender_numbers:
+  /accounts/sender-numbers:
     get:
       description: retrieves All sender numbers available for the account
       produces:
@@ -781,6 +781,25 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get All sender numbers
+      tags:
+      - users
+  /accounts/sender-numbers/sale:
+    get:
+      description: retrieves All sender numbers available for sale
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SenderNumbersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get All sender numbers for sale
       tags:
       - users
   /admin/activate/{id}:
