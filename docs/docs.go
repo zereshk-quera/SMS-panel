@@ -37,6 +37,15 @@ const docTemplate = `{
                     "phonebook"
                 ],
                 "summary": "Get all phone books",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -68,6 +77,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create a phone book entry",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Phone book entry data",
                         "name": "phoneBook",
@@ -115,12 +131,19 @@ const docTemplate = `{
                 "summary": "Create a new phone book number",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Phone book number object",
                         "name": "phoneBookNumber",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.PhoneBookNumber"
+                            "$ref": "#/definitions/handlers.CreatePhoneBookNumberRequest"
                         }
                     }
                 ],
@@ -309,6 +332,13 @@ const docTemplate = `{
                         "name": "phoneBookID",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -345,6 +375,13 @@ const docTemplate = `{
                 ],
                 "summary": "Delete a phone book",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Phone Book ID",
@@ -395,6 +432,13 @@ const docTemplate = `{
                         "name": "phoneBookID",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -436,6 +480,13 @@ const docTemplate = `{
                 ],
                 "summary": "Update a phone book",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Phone Book ID",
@@ -1576,6 +1627,26 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.CreatePhoneBookNumberRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phoneBookID": {
+                    "type": "integer"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -1620,13 +1691,9 @@ const docTemplate = `{
         "handlers.PhoneBookRequest": {
             "type": "object",
             "required": [
-                "accountID",
                 "name"
             ],
             "properties": {
-                "accountID": {
-                    "type": "integer"
-                },
                 "name": {
                     "type": "string"
                 }

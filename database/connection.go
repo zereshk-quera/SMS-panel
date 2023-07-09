@@ -19,7 +19,7 @@ func Connect() error {
 
 	// If not connect - use "db" instead of "localhost"
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		"localhost", "postgres", "root", "test", "5432", "disable", "Asia/Tehran")
+		"localhost", "postgres", "postgres", "sms_panel", "5433", "disable", "Asia/Tehran")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})

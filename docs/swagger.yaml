@@ -53,6 +53,19 @@ definitions:
         example: 42
         type: number
     type: object
+  handlers.CreatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+      username:
+        type: string
+    type: object
   handlers.ErrorResponse:
     properties:
       message:
@@ -81,12 +94,9 @@ definitions:
     type: object
   handlers.PhoneBookRequest:
     properties:
-      accountID:
-        type: integer
       name:
         type: string
     required:
-    - accountID
     - name
     type: object
   handlers.PhoneBookResponse:
@@ -267,6 +277,11 @@ paths:
       - application/json
       description: Update a phone book by ID for a given account ID
       parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Phone Book ID
         in: path
         name: phoneBookID
@@ -305,6 +320,12 @@ paths:
       consumes:
       - application/json
       description: Get all phone books for a given account ID
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -326,6 +347,11 @@ paths:
       - application/json
       description: Create a new phone book entry
       parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Phone book entry data
         in: body
         name: phoneBook
@@ -356,6 +382,11 @@ paths:
       - application/json
       description: Delete a phone book by ID for a given account ID
       parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Phone Book ID
         in: path
         name: phoneBookID
@@ -389,6 +420,11 @@ paths:
         name: phoneBookID
         required: true
         type: integer
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -418,6 +454,11 @@ paths:
         name: phoneBookID
         required: true
         type: string
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -444,12 +485,17 @@ paths:
       - application/json
       description: Create a new phone book number
       parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Phone book number object
         in: body
         name: phoneBookNumber
         required: true
         schema:
-          $ref: '#/definitions/models.PhoneBookNumber'
+          $ref: '#/definitions/handlers.CreatePhoneBookNumberRequest'
       produces:
       - application/json
       responses:

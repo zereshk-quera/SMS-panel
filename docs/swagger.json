@@ -30,6 +30,15 @@
                     "phonebook"
                 ],
                 "summary": "Get all phone books",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -61,6 +70,13 @@
                 ],
                 "summary": "Create a phone book entry",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Phone book entry data",
                         "name": "phoneBook",
@@ -108,12 +124,19 @@
                 "summary": "Create a new phone book number",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Phone book number object",
                         "name": "phoneBookNumber",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.PhoneBookNumber"
+                            "$ref": "#/definitions/handlers.CreatePhoneBookNumberRequest"
                         }
                     }
                 ],
@@ -302,6 +325,13 @@
                         "name": "phoneBookID",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -338,6 +368,13 @@
                 ],
                 "summary": "Delete a phone book",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Phone Book ID",
@@ -388,6 +425,13 @@
                         "name": "phoneBookID",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -429,6 +473,13 @@
                 ],
                 "summary": "Update a phone book",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Phone Book ID",
@@ -1569,6 +1620,26 @@
                 }
             }
         },
+        "handlers.CreatePhoneBookNumberRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "phoneBookID": {
+                    "type": "integer"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -1613,13 +1684,9 @@
         "handlers.PhoneBookRequest": {
             "type": "object",
             "required": [
-                "accountID",
                 "name"
             ],
             "properties": {
-                "accountID": {
-                    "type": "integer"
-                },
                 "name": {
                     "type": "string"
                 }
