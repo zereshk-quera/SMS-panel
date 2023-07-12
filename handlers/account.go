@@ -46,6 +46,10 @@ type RentNumberRequest struct {
 	SubscriptionNumberPackage string `json:"SubscriptionNumberPackage"`
 }
 
+type BuyNumberRequest struct {
+	SenderNumber string `json:"senderNumber"`
+}
+
 type BudgetAmountResponse struct {
 	Amount int `json:"amount"`
 }
@@ -311,6 +315,108 @@ func RentNumberHandler(c echo.Context, db *gorm.DB) error {
 		NumberID:              senderNumbersObject.ID,
 		StartDate:             startDate,
 		EndDate:               endDate,
+		IsAvailable:           true,
+		SubscriptionPackageID: subPackage.ID,
+	}
+	if err = tx.Create(&userNumberObject).Error; err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+
+	// Update senderNumber
+	err = tx.Model(&models.SenderNumber{}).Where("id = ?", senderNumbersObject.ID).
+		Update("is_exclusive", true).
+		Error
+	if err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+
+	// Update account budget
+	account.Budget -= subPackage.Price
+	if err = tx.Save(&account).Error; err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+
+	tx.Commit()
+
+	return c.JSON(http.StatusOK, models.Response{
+		ResponseCode: http.StatusOK, Message: "success",
+	})
+}
+
+// @Summary Buy number
+// @Description Buy available number for this account
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param body body BuyNumberRequest true "Get sender number and subscription package."
+// @Success 200 {object} models.Response
+// @Failure 204 {object} ErrorResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /accounts/buy-number [post]
+func BuyNumberHandler(c echo.Context, db *gorm.DB) error {
+	account := c.Get("account").(models.Account)
+	body := BuyNumberRequest{}
+	ctx := c.Request().Context()
+
+	if err := c.Bind(&body); err != nil {
+		errResponse := ErrorResponse{
+			Message: "Invalid request payload",
+		}
+		return c.JSON(http.StatusBadRequest, errResponse)
+	}
+
+	// Check if sender number is available for this user
+	var senderNumbersObject models.SenderNumber
+
+	err := db.WithContext(ctx).WithContext(ctx).Model(&models.SenderNumber{}).
+		Select("sender_numbers.id", "sender_numbers.number").
+		Joins("LEFT JOIN user_numbers ON sender_numbers.id = user_numbers.number_id").
+		Where(
+			"sender_numbers.is_default=false and sender_numbers.is_exclusive=false and sender_numbers.number = ?",
+			body.SenderNumber).
+		First(&senderNumbersObject).Error
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusNotFound, ErrorResponse{Message: "Sender number not found!"})
+	}
+
+	// get the subscription number package
+	var subPackage models.SubscriptionNumberPackage
+	err = db.WithContext(ctx).First(
+		&subPackage, utils.SUBSCRIOPTION_PACKAGE_BUY_ID,
+	).Error
+	if err != nil {
+		errorResponse := ErrorResponse{Message: "Subscription package does not exist."}
+		return c.JSON(http.StatusNotFound, errorResponse)
+	}
+	haveAccountBudget := utils.DoesAcountHaveBudget(
+		account.Budget, subPackage.Price,
+	)
+	if !haveAccountBudget {
+		errorResponse := ErrorResponse{Message: "You don't have enough budget!"}
+		return c.JSON(http.StatusNotFound, errorResponse)
+	}
+
+	// Save to database
+	tx := db.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Error"})
+	}
+
+	userNumberObject := models.UserNumbers{
+		UserID:                account.UserID,
+		NumberID:              senderNumbersObject.ID,
+		StartDate:             time.Now(),
 		IsAvailable:           true,
 		SubscriptionPackageID: subPackage.ID,
 	}

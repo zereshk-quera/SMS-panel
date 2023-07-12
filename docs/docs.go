@@ -521,6 +521,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/accounts/buy-number": {
+            "post": {
+                "description": "Buy available number for this account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Buy number",
+                "parameters": [
+                    {
+                        "description": "Get sender number and subscription package.",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.BuyNumberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/accounts/login": {
             "post": {
                 "description": "Login with username and password",
@@ -1560,6 +1612,14 @@ const docTemplate = `{
             "properties": {
                 "amount": {
                     "type": "integer"
+                }
+            }
+        },
+        "handlers.BuyNumberRequest": {
+            "type": "object",
+            "properties": {
+                "senderNumber": {
+                    "type": "string"
                 }
             }
         },
