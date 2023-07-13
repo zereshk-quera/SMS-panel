@@ -1141,7 +1141,7 @@ paths:
       summary: Get SMS Report
       tags:
       - admin
-  /sms/periodic-sms:
+  /sms/periodic:
     post:
       consumes:
       - application/json
@@ -1211,8 +1211,8 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Send sms to phone books numbers
       tags:
-      - SMS
-  /sms/single-sms:
+      - messages
+  /sms/single:
     post:
       consumes:
       - application/json

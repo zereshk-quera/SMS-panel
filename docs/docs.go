@@ -1358,7 +1358,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sms/periodic-sms": {
+        "/sms/periodic": {
             "post": {
                 "security": [
                     {
@@ -1426,7 +1426,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SMS"
+                    "messages"
                 ],
                 "summary": "Send sms to phone books numbers",
                 "parameters": [
@@ -1468,7 +1468,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/sms/single-sms": {
+        "/sms/single": {
             "post": {
                 "security": [
                     {

@@ -1351,7 +1351,7 @@
                 }
             }
         },
-        "/sms/periodic-sms": {
+        "/sms/periodic": {
             "post": {
                 "security": [
                     {
@@ -1419,7 +1419,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "SMS"
+                    "messages"
                 ],
                 "summary": "Send sms to phone books numbers",
                 "parameters": [
@@ -1461,7 +1461,7 @@
                 }
             }
         },
-        "/sms/single-sms": {
+        "/sms/single": {
             "post": {
                 "security": [
                     {
