@@ -60,7 +60,7 @@ func PeriodicSendSMSHandler(c echo.Context, db *gorm.DB) error {
 	}
 
 	// Check if sender number is available
-	senderNumberExisted := utils.IsSenderNumberExist(
+	senderNumberExisted := !utils.IsSenderNumberExist(
 		ctx, db, request.SenderNumber, account.UserID,
 	)
 	if senderNumberExisted {
