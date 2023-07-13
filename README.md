@@ -114,7 +114,7 @@ GET accounts/sender-numbers
 2. Get all sender number for purchase:
 
 ```
-POST accounts/sender-numbers/sale
+GET accounts/sender-numbers/sale
 ```
 
 3. Send a single SMS:
@@ -153,13 +153,13 @@ POST admin/register
 1. Activate a user:
 
 ```
-POST admin/activate/:id
+PATCH admin/activate/:id
 ```
 
 2. Deactivate a user:
 
 ```
-POST admin/deactivate/:id
+PATCH admin/deactivate/:id
 ```
 
 ### Configuration Management
