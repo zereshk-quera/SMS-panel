@@ -1,48 +1,212 @@
-# SMS-panel
+# SMS Panel Project
 
-Creating a New Migration To create a new migration, follow these steps:
+The SMS Panel Project is a simple and efficient platform for managing and sending SMS messages, built with Golang using GORM and the Echo web framework. This project allows users to register, log in, manage phone books and phone numbers, and send SMS messages to individuals or groups.
 
-Open a terminal and navigate to the project's database/migrations directory.
+## Features
 
-Run the following command to create a new migration file:
+- User registration and login
+- Account budget management
+- Payment gateway creation and verification
+- Phone book and phone number CRUD operations
+- Single, Periodic, and Group SMS sending
+- Sender number management and purchase
+- SMS Sending with Templates: Personalize your SMS messages by including customizable templates with variables. Supported variables include:
+  - `%name`: Replaced with the name of the phone book number.
+  - `%date`: Replaced with the current date and time.
+  - `%prefix`: Replaced with the prefix of the phone book number object.
+  - `%username`: Replaced with the username of the phone book number.
+- Admin Panel for managing users, configurations, and SMS messages
 
-migrate create -ext sql -dir migrations -seq <migration_name> Replace <migration_name> with a descriptive name for your migration.
+## Installation
 
-Two files will be created: <migration_name>.down.sql and <migration_name>.up.sql. The up file contains the SQL statements for applying the migration, while the down file contains the SQL statements for rolling back the migration.
+1. Clone the repository to your local machine:
 
-Open the up and down SQL files and write the necessary SQL statements to define your migration. Update the tables, columns, constraints, or any other changes you want to make to the database schema.
+```bash
+git clone https://github.com/zereshk-quera/SMS-panel.git
+```
 
-Applying Migrations To apply the migrations and update the database schema, run the following command:
+2. Navigate into the project directory:
 
-migrate -path database/migrations -database "<database_connection_string>" up Replace <database_connection_string> with the actual database connection string. like this migrate -path database/migrations -database "postgres://user:password@host:port/database?sslmode=disable" up
+```bash
+cd SMS-panel
+```
 
-Rolling Back Migrations To roll back the last applied migration and revert the changes made to the database schema, run the following command:
+3. Install the required dependencies:
 
-migrate -path database/migrations -database "<database_connection_string>" down Replace <database_connection_string> with the actual database connection string. like this migrate -path database/migrations -database "<database_connection_string>" down
+```bash
+go mod download
+```
 
-That's it! With these instructions, you can create new migrations and apply them to your database, as well as roll back migrations if needed.
+4. Run the project:
 
-Swagger Documentation
+```bash
+go run .
+```
 
-Updating Swagger Documentation To update the Swagger documentation for the API, follow these steps:
+The server will start running at `localhost:8080`.
 
-Make the necessary changes to your API endpoints and their annotations in your code.
+## Usage
 
-Open a terminal and navigate to the package where your handlers are located.
+### Authentication
 
-Run the swag init command to regenerate the Swagger JSON file:
+1. Register a new user:
 
-swag init This command scans your Go files and updates the Swagger JSON file based on the annotations in your code. Make sure you have the swag tool installed and available in your system's PATH.
+```
+POST accounts/register
+```
 
-After running the swag init command, the Swagger JSON file will be updated with your latest code changes.
+2. Log in with the registered user:
 
-Accessing Swagger Documentation To access the Swagger documentation and interact with the API, follow these steps:
+```
+POST accounts/login
+```
 
-Build and run your application.
+### Account Management
 
-Open a web browser and navigate to the Swagger UI URL. The default URL is typically http://localhost:8080/swagger/index.html.
+1. Get user budget:
 
-## Swagger
-start using swagger [echo-swagger man page](https://github.com/swaggo/echo-swagger)
+```
+GET accounts/budget
+```
 
-The Swagger UI provides a user-friendly interface to explore the API endpoints, view request/response details, and even test the API by sending requests directly from the Swagger UI.
+### Payment
+
+1. Create a payment gateway link:
+
+```
+POST accounts/payment/request
+```
+
+2. Verify the payment:
+
+```
+GET accounts/payment/verify
+```
+
+### Phone Book Management
+
+1. CRUD operations for phone books:
+
+```
+GET /phone-books
+POST /phone-books
+PUT /phone-books/:id
+DELETE /phone-books/:id
+```
+
+2. CRUD operations for phone book numbers:
+
+```
+GET accounts/phone-books/:id/numbers
+POST accounts/phone-books/:id/numbers
+PUT accounts/phone-books/:id/numbers/:numberId
+DELETE accounts/phone-books/:id/numbers/:numberId
+```
+
+### SMS Sending
+
+1. Get all available sender numbers:
+
+```
+GET accounts/sender-numbers
+```
+
+2. Get all sender number for purchase:
+
+```
+POST accounts/sender-numbers/sale
+```
+
+3. Send a single SMS:
+
+```
+POST /sms/single
+```
+
+4. Send a periodic SMS:
+
+```
+POST /sms/periodic
+```
+
+5. Send a group SMS:
+
+```
+POST /sms/phonebooks
+```
+
+## Admin Panel
+
+The Admin Panel is a web-based interface for managing users, configurations, and SMS messages.
+
+### Authentication
+
+1. Log in as an admin:
+
+```
+POST admin/login
+POST admin/register
+```
+
+### User Management
+
+1. Activate a user:
+
+```
+POST admin/activate/:id
+```
+
+2. Deactivate a user:
+
+```
+POST admin/deactivate/:id
+```
+
+### Configuration Management
+
+1. Create the configuration:
+
+```
+POST admin/add-config
+```
+
+### SMS Search and Reporting
+
+1. Search for SMS messages containing a specific word:
+
+```
+GET admin/search/:word
+```
+
+2. Get a report of all SMS messages sent:
+
+```
+GET admin/sms-report
+```
+
+### Bad Word Management
+
+1. Add a new bad word:
+
+```
+POST admin/bad-words/:word
+```
+
+### SMS Sending with Templates
+
+The SMS Panel Project allows you to send SMS messages with customizable templates that can be dynamically populated with variables. This feature enables you to personalize the messages by inserting specific values such as names, dates, prefixes, and usernames into the content of the SMS.
+
+To use this feature, you can include special placeholder variables in your SMS message templates. When sending the SMS, these variables will be substituted with the corresponding values based on the context. Here are the supported variables and their usage:
+
+- `%name`: Replaced with the name of the phone book number.
+- `%date`: Replaced with the current date and time.
+- `%prefix`: Replaced with the prefix of the phone book number object.
+- `%username`: Replaced with the username of the phone book number.
+
+Here's an example of how you can use these variables in your SMS message template:
+
+```plaintext
+Hello %name! This is a reminder for your appointment on %date. Please arrive on time. Your prefix is %prefix. Thank you, %username.
+```
+
+In the above example, when sending an SMS using this template, the `%name` variable will be replaced with the actual name of the phone book number, `%date` will be replaced with the current date and time, `%prefix` will be replaced with the prefix of the phone book number, and `%username` will be replaced with the username of the phone book number.

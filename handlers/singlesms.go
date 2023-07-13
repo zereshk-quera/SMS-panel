@@ -43,7 +43,7 @@ type ErrorResponseSingle struct {
 // @Failure 403 {object} ErrorResponseSingle
 // @Failure 404 {object} ErrorResponseSingle
 // @Failure 500 {object} ErrorResponseSingle
-// @Router /sms/single-sms [post]
+// @Router /sms/single [post]
 func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	ctx := c.Request().Context()

@@ -25,6 +25,23 @@ type SendSMSRequestPeriodic struct {
 	PhoneBookID  string `json:"phone_book_id"`
 }
 
+// PeriodicSendSMSHandler sends periodic SMS messages
+// @Summary Send periodic SMS messages
+// @Description Send periodic SMS messages with specified schedule and interval
+// @Tags messages
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authorization Token"
+// @Param sendSMSRequestPeriodic body SendSMSRequestPeriodic true "SMS message details"
+// @Success 200 {string} string "SMS scheduled successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 400 {string} string "Invalid schedule time format"
+// @Failure 400 {string} string "Recipient not provided"
+// @Failure 400 {string} string "Recipient does not exist in the phone book"
+// @Failure 400 {string} string "Insufficient budget"
+// @Failure 500 {string} string "Internal server error"
+// @Router /sms/periodic [post]
 func PeriodicSendSMSHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	ctx := c.Request().Context()
