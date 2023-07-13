@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
+	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
@@ -60,11 +62,24 @@ type Message struct {
 }
 
 func MockSendMessage(message *Message) (string, error) {
-	// Log the message details
+	// Query the database to retrieve bad words
+	var badWords []models.Bad_Word
+	db, err := database.GetConnection()
+	if err != nil {
+		return "failed to connect db", err
+	}
+	db.Find(&badWords)
+
+	for _, badWord := range badWords {
+		regex := regexp.MustCompile(badWord.Regex)
+		if regex.MatchString(message.Text) {
+			return "message not sent", errors.New("Message contains a bad word")
+		}
+	}
+
 	log.Printf("Message sent - Text: %s, Source: %s, Destination: %s", message.Text, message.Source, message.Destination)
 
-	deliveryReport := "Message sent successfully"
-	return deliveryReport, nil
+	return "Message sent successfully", nil
 }
 
 func CreateSMSTemplate(template string, phoneNumber models.PhoneBookNumber) string {
@@ -254,4 +269,3 @@ func SendGroupMessage(
 func DoesAcountHaveBudget(smsCost int, smsCounts int, budget int64) bool {
 	return budget > int64(smsCost*smsCounts)
 }
-
