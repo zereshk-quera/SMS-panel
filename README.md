@@ -45,6 +45,12 @@ go run .
 
 The server will start running at `localhost:8080`.
 
+5. Access the Swagger API documentation:
+
+Swagger URL: [http://localhost:8080/swagger/](http://localhost:8080/swagger/)
+
+The Swagger URL provides access to the Swagger API documentation for the SMS Panel Project.
+
 ## Usage
 
 ### Authentication
