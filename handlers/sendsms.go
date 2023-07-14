@@ -153,7 +153,7 @@ func SendMessageToPhoneBooks(
 		}
 		message := CreateSMSTemplate(body.Message, phoneNumber)
 		go SendGroupMessage(
-			statusOfMessages, message, messageID, body.Account, phoneNumber,
+			statusOfMessages, message, messageID, body.Account, phoneNumber, db,
 		)
 	}
 
@@ -239,15 +239,23 @@ func SendGroupMessage(
 	messageID int,
 	account models.Account,
 	phoneNumber models.PhoneBookNumber,
+	db *gorm.DB,
 ) {
-	err := sendMessageApi(message, phoneNumber.Phone)
+	_, err := MockSendMessage(
+		&Message{
+			Text:        message,
+			Source:      account.Username,
+			Destination: phoneNumber.Phone,
+		}, db,
+	)
 	if err != nil {
 		ch <- SendMessageStatus{ID: messageID, Status: false}
 		log.Printf(
-			"Field to sent message - Text: %s, Source: %s, Destination: %s",
+			"Field to sent message - Text: %s, Source: %s, Destination: %s \n DetailError: %s",
 			message,
 			account.Username,
 			phoneNumber.Phone,
+			err,
 		)
 		return
 	}
