@@ -15,6 +15,9 @@ var dbConn *gorm.DB
 func Connect() error {
 
 	cfg, err := config.NewConfig()
+	if err != nil {
+		return err
+	}
 	//-------env----------
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 		cfg.PG.HOST, cfg.PG.USER, cfg.PG.PASSWORD, cfg.PG.DB, cfg.PG.PORT, cfg.PG.SSLMODE, cfg.PG.TIMEZONE)
