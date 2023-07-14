@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	database "SMS-panel/database"
 	"SMS-panel/models"
 	"SMS-panel/utils"
 
@@ -61,13 +60,9 @@ type Message struct {
 	Destination string `json:"destination"`
 }
 
-func MockSendMessage(message *Message) (string, error) {
+func MockSendMessage(message *Message, db *gorm.DB) (string, error) {
 	// Query the database to retrieve bad words
 	var badWords []models.Bad_Word
-	db, err := database.GetConnection()
-	if err != nil {
-		return "failed to connect db", err
-	}
 	db.Find(&badWords)
 
 	for _, badWord := range badWords {

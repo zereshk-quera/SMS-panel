@@ -147,7 +147,7 @@ func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 		Text:        message,
 		Source:      account.Username,
 		Destination: destination,
-	})
+	}, db)
 
 	sms := models.SMSMessage{
 		Sender:         reqBody.SenderNumber,

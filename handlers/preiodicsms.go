@@ -149,7 +149,7 @@ func sendSMS(db *gorm.DB, senderNumber string, phoneBookNumbers []models.PhoneBo
 			Text:        sms.Message,
 			Source:      sms.Sender,
 			Destination: sms.Recipient,
-		})
+		}, db)
 		if err != nil {
 			sms.DeliveryReport = deliveryReport
 			log.Printf("Failed to send SMS: %s", err.Error())

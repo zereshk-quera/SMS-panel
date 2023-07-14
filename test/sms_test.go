@@ -64,7 +64,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 
 	t.Run("InvalidRequestPayload", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "invalid": "json" `)) // Modify the JSON to make it invalid
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "invalid": "json" `)) // Modify the JSON to make it invalid
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -85,7 +85,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 
 	t.Run("InvalidPhoneNumber", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "phone_number": "123" }`))
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "phone_number": "123" }`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -106,7 +106,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 
 	t.Run("SenderNumberNotFound", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "SenderNumber": "123456", "PhoneNumber": "1234567890" }`))
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "SenderNumber": "123456", "PhoneNumber": "1234567890" }`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -142,7 +142,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 		}
 		err = db.Create(&user_number).Error
 		assert.NoError(t, err)
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304339","message":"hello","username":"test" }`))
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304339","message":"hello","username":"test" }`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -165,7 +165,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 		err = db.Model(&account).Update("budget", newBudget).Error
 		assert.NoError(t, err)
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304339","message":"hello","username":"username" }`))
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304339","message":"hello","username":"username" }`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -187,7 +187,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 		newBudget := 200
 		err = db.Model(&account).Update("budget", newBudget).Error
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304331","message":"hello" }`))
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304331","message":"hello" }`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -210,7 +210,7 @@ func TestSendSingleSMSHandler(t *testing.T) {
 		newBudget := 200
 		err = db.Model(&account).Update("budget", newBudget).Error
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/single-sms", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304339","message":"hello","username":"test" }`))
+		req := httptest.NewRequest(http.MethodPost, "/sms/single", strings.NewReader(`{ "senderNumbers": "123456789", "phone_number": "09376304339","message":"hello","username":"test" }`))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -311,7 +311,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 
 	t.Run("ValidRequest", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", strings.NewReader(`{
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", strings.NewReader(`{
 			"username": "test",
 			"senderNumbers": "123456789",
 			"phone": "09376304339",
@@ -332,7 +332,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 
 	t.Run("InvalidRequestPayload", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", strings.NewReader("invalid request payload"))
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", strings.NewReader("invalid request payload"))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -356,7 +356,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 			PhoneBookID:  "",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", bytes.NewReader(reqJSON))
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", bytes.NewReader(reqJSON))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -380,7 +380,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 			PhoneBookID:  "",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", bytes.NewReader(reqJSON))
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", bytes.NewReader(reqJSON))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -404,7 +404,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 			PhoneBookID:  "",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", bytes.NewReader(reqJSON))
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", bytes.NewReader(reqJSON))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -435,7 +435,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 			PhoneBookID:  "",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", bytes.NewReader(reqJSON))
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", bytes.NewReader(reqJSON))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -461,7 +461,7 @@ func TestPeriodicSendSMSHandler(t *testing.T) {
 			PhoneBookID:  "",
 		}
 		reqJSON, _ := json.Marshal(reqBody)
-		req := httptest.NewRequest(http.MethodPost, "/sms/periodic-sms", bytes.NewReader(reqJSON))
+		req := httptest.NewRequest(http.MethodPost, "/sms/periodic", bytes.NewReader(reqJSON))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
