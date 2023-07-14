@@ -1,0 +1,1303 @@
+basePath: /
+definitions:
+  handlers.AccountResponse:
+    properties:
+      Budget:
+        type: integer
+      ID:
+        type: integer
+      IsActive:
+        type: boolean
+      Password:
+        type: string
+      Token:
+        type: string
+      UserID:
+        type: integer
+      Username:
+        type: string
+    type: object
+  handlers.AdminRegistrationRequest:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      nationalid:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.AmountFee:
+    properties:
+      fee:
+        type: integer
+    type: object
+  handlers.BudgetAmountResponse:
+    properties:
+      amount:
+        type: integer
+    type: object
+  handlers.BuyNumberRequest:
+    properties:
+      senderNumber:
+        type: string
+    type: object
+  handlers.ConfigurationRequest:
+    properties:
+      name:
+        example: config_name
+        type: string
+      value:
+        example: 42
+        type: number
+    type: object
+  handlers.CreatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.ErrorResponseRegisterLogin:
+    properties:
+      message:
+        type: string
+      responsecode:
+        type: integer
+    type: object
+  handlers.ErrorResponseSingle:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  handlers.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.PhoneBookRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  handlers.PhoneBookResponse:
+    properties:
+      accountID:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handlers.RentNumberRequest:
+    properties:
+      SubscriptionNumberPackage:
+        type: string
+      senderNumber:
+        type: string
+    type: object
+  handlers.RequestResponse:
+    properties:
+      payment_url:
+        type: string
+    type: object
+  handlers.SendSMSRequest:
+    properties:
+      message:
+        example: Hello, World!
+        type: string
+      phone_number:
+        example: "1234567890"
+        type: string
+      senderNumbers:
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - senderNumbers
+    type: object
+  handlers.SendSMSRequestPeriodic:
+    properties:
+      interval:
+        type: string
+      message:
+        type: string
+      phone:
+        type: string
+      phone_book_id:
+        type: string
+      schedule:
+        type: string
+      senderNumbers:
+        type: string
+      username:
+        type: string
+    required:
+    - senderNumbers
+    type: object
+  handlers.SendSMSResponse:
+    properties:
+      message:
+        example: SMS sent successfully
+        type: string
+    type: object
+  handlers.SendSMessageToPhoneBooksBody:
+    properties:
+      message:
+        type: string
+      phoneBooks:
+        items:
+          type: string
+        type: array
+      senderNumbers:
+        type: string
+    required:
+    - message
+    - phoneBooks
+    - senderNumbers
+    type: object
+  handlers.SenderNumbersResponse:
+    properties:
+      numbers:
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.UpdatePhoneBookNumberRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      prefix:
+        type: string
+    type: object
+  handlers.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      nationalid:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.VerifyResponse:
+    properties:
+      Authority:
+        type: string
+      Status:
+        type: string
+    type: object
+  models.Bad_Word:
+    properties:
+      id:
+        type: integer
+      regex:
+        type: string
+      word:
+        type: string
+    type: object
+  models.PhoneBook:
+    properties:
+      accountID:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.PhoneBookNumber:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      phoneBook:
+        $ref: '#/definitions/models.PhoneBook'
+      phoneBookID:
+        type: integer
+      prefix:
+        type: string
+      username:
+        type: string
+    type: object
+  models.Response:
+    properties:
+      message:
+        type: string
+      responsecode:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Quera SMS-PANEL server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: SMS-PANEL
+  version: "1.0"
+paths:
+  /account/{accountID}/phone-books/{phoneBookID}:
+    put:
+      consumes:
+      - application/json
+      description: Update a phone book by ID for a given account ID
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      - description: Phone Book object
+        in: body
+        name: phoneBook
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PhoneBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update a phone book
+      tags:
+      - phonebook
+  /account/phone-books/:
+    get:
+      consumes:
+      - application/json
+      description: Get all phone books for a given account ID
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PhoneBookResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get all phone books
+      tags:
+      - phonebook
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book entry
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Phone book entry data
+        in: body
+        name: phoneBook
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PhoneBookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a phone book entry
+      tags:
+      - phonebook
+  /account/phone-books/{phoneBookID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a phone book by ID for a given account ID
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a phone book
+      tags:
+      - phonebook
+    get:
+      consumes:
+      - application/json
+      description: Get a phone book by ID for a given account ID
+      parameters:
+      - description: Phone Book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: integer
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PhoneBookResponse'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get a phone book
+      tags:
+      - phonebook
+  /account/phone-books/{phoneBookID}/phone-book-numbers:
+    get:
+      consumes:
+      - application/json
+      description: Get all phone book numbers for a given PhoneBookID
+      parameters:
+      - description: Phone book ID
+        in: path
+        name: phoneBookID
+        required: true
+        type: string
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.PhoneBookNumber'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all phone book numbers for a given PhoneBookID
+      tags:
+      - PhoneBookNumbers
+  /account/phone-books/phone-book-numbers:
+    post:
+      consumes:
+      - application/json
+      description: Create a new phone book number
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Phone book number object
+        in: body
+        name: phoneBookNumber
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePhoneBookNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new phone book number
+      tags:
+      - PhoneBookNumbers
+  /account/phone-books/phone-book-numbers/{phoneBookNumberID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete phone book number
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete phone book number
+      tags:
+      - PhoneBookNumbers
+    get:
+      consumes:
+      - application/json
+      description: Get phone book number by ID
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get phone book number by ID
+      tags:
+      - PhoneBookNumbers
+    put:
+      consumes:
+      - application/json
+      description: Update phone book number
+      parameters:
+      - description: Phone book number ID
+        in: path
+        name: phoneBookNumberID
+        required: true
+        type: string
+      - description: Phone book number object
+        in: body
+        name: phoneBookNumber
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePhoneBookNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PhoneBookNumber'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update phone book number
+      tags:
+      - PhoneBookNumbers
+  /accounts/budget:
+    get:
+      description: Get the budget amount for the logged-in user
+      parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.BudgetAmountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get budget amount
+      tags:
+      - users
+  /accounts/buy-number:
+    post:
+      consumes:
+      - application/json
+      description: Buy available number for this account
+      parameters:
+      - description: Get sender number and subscription package.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BuyNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Buy number
+      tags:
+      - users
+  /accounts/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with username and password
+      parameters:
+      - description: Login request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: User login
+      tags:
+      - users
+  /accounts/payment/request:
+    post:
+      consumes:
+      - application/json
+      description: Zarinpal Payment to add budget to account
+      parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Payment request details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AmountFee'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RequestResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Add budget request
+      tags:
+      - payment
+  /accounts/payment/verify:
+    get:
+      consumes:
+      - application/json
+      description: Verify Zarinpal Payment to add budget to account
+      parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Payment verify details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VerifyResponse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "422":
+          description: Unprocessable Entity
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Verify budget payment and add budget
+      tags:
+      - payment
+  /accounts/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided information
+      parameters:
+      - description: User registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Register a new user
+      tags:
+      - users
+  /accounts/rent-number:
+    post:
+      consumes:
+      - application/json
+      description: Rent available number for this account
+      parameters:
+      - description: Get sender number and subscription package.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RentNumberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Rent number
+      tags:
+      - users
+  /accounts/sender-numbers:
+    get:
+      description: retrieves All sender numbers available for the account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SenderNumbersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get All sender numbers
+      tags:
+      - users
+  /accounts/sender-numbers/sale:
+    get:
+      description: retrieves All sender numbers available for sale
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SenderNumbersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get All sender numbers for sale
+      tags:
+      - users
+  /admin/activate/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Activates the specified account.
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Activate Account
+      tags:
+      - admin
+  /admin/add-bad-word/{word}:
+    post:
+      consumes:
+      - application/json
+      description: Add a new bad word to the database
+      parameters:
+      - description: Word to add as a bad word
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Bad_Word'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Add a bad word
+      tags:
+      - admin
+  /admin/add-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a new configuration entry
+      parameters:
+      - description: Configuration object to be added
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ConfigurationRequest'
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Configuration
+      tags:
+      - admin
+  /admin/deactivate/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Deactivates the specified account.
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Deactivate Account
+      tags:
+      - admin
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in an admin user.
+      parameters:
+      - description: Login Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseRegisterLogin'
+      summary: Admin login
+      tags:
+      - admin
+  /admin/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new admin with the provided details
+      parameters:
+      - description: User Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Admin registration details
+        in: body
+        name: adminRegistrationRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AdminRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin account created successfully
+          schema:
+            $ref: '#/definitions/handlers.AccountResponse'
+        "422":
+          description: Username already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: User creation failed
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "502":
+          description: Can't connect to the database
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Register a new admin
+      tags:
+      - admin
+  /admin/search/{word}:
+    get:
+      consumes:
+      - application/json
+      description: Search for SMS messages containing a specific word
+      parameters:
+      - description: Word to search for in SMS messages
+        in: path
+        name: word
+        required: true
+        type: string
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Search SMS Messages
+      tags:
+      - admin
+  /admin/sms-report:
+    get:
+      description: Retrieve the SMS report with the number of messages per account
+      parameters:
+      - description: Authorization header with Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get SMS Report
+      tags:
+      - admin
+  /sms/periodic:
+    post:
+      consumes:
+      - application/json
+      description: Send periodic SMS messages with specified schedule and interval
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: SMS message details
+        in: body
+        name: sendSMSRequestPeriodic
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendSMSRequestPeriodic'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMS scheduled successfully
+          schema:
+            type: string
+        "400":
+          description: Insufficient budget
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Send periodic SMS messages
+      tags:
+      - messages
+  /sms/phonebooks:
+    post:
+      consumes:
+      - application/json
+      description: Send sms to phone books numbers
+      parameters:
+      - description: Phone books sms details.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendSMessageToPhoneBooksBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SendSMSResponse'
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Send sms to phone books numbers
+      tags:
+      - messages
+  /sms/single:
+    post:
+      consumes:
+      - application/json
+      description: Send a single SMS message
+      parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: SMS message details
+        in: body
+        name: sendSMSRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendSMSRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SendSMSResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponseSingle'
+      security:
+      - ApiKeyAuth: []
+      summary: Send a single SMS message
+      tags:
+      - messages
+swagger: "2.0"
