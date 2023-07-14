@@ -1223,6 +1223,11 @@ paths:
       - application/json
       description: Send sms to phone books numbers
       parameters:
+      - description: Authorization Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Phone books sms details.
         in: body
         name: body

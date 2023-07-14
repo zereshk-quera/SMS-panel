@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"regexp"
 	"strings"
 	"time"
@@ -153,7 +152,7 @@ func SendMessageToPhoneBooks(
 		}
 		message := CreateSMSTemplate(body.Message, phoneNumber)
 		go SendGroupMessage(
-			statusOfMessages, message, messageID, body.Account, phoneNumber,
+			statusOfMessages, message, messageID, body.Account, phoneNumber, db,
 		)
 	}
 
@@ -215,39 +214,29 @@ func CheckPhoneBooksExist(ctx context.Context, db *gorm.DB, phoneBooks []string)
 	return true, nil
 }
 
-func sendMessageApiWithError(message string, phoneNumber string) error {
-	n := rand.Intn(10)
-	if n%2 == 0 {
-		return errors.New("field to send message!")
-	} else {
-		return nil
-	}
-}
-
-func sendMessageApiWithSuccess(message string, phoneNumber string) error {
-	return nil
-}
-
-func sendMessageApi(message string, phoneNumber string) error {
-	// return sendMessageApiWithError(message, phoneNumber)
-	return sendMessageApiWithSuccess(message, phoneNumber)
-}
-
 func SendGroupMessage(
 	ch chan<- SendMessageStatus,
 	message string,
 	messageID int,
 	account models.Account,
 	phoneNumber models.PhoneBookNumber,
+	db *gorm.DB,
 ) {
-	err := sendMessageApi(message, phoneNumber.Phone)
+	_, err := MockSendMessage(
+		&Message{
+			Text:        message,
+			Source:      account.Username,
+			Destination: phoneNumber.Phone,
+		}, db,
+	)
 	if err != nil {
 		ch <- SendMessageStatus{ID: messageID, Status: false}
 		log.Printf(
-			"Field to sent message - Text: %s, Source: %s, Destination: %s",
+			"Field to sent message - Text: %s, Source: %s, Destination: %s \n DetailError: %s",
 			message,
 			account.Username,
 			phoneNumber.Phone,
+			err,
 		)
 		return
 	}

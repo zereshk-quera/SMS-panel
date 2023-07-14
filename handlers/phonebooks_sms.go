@@ -30,6 +30,7 @@ func NewSmsPhoneBookHandler(db *gorm.DB) *SmsPhoneBookHandler {
 // @Tags messages
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Authorization Token"
 // @Param body body SendSMessageToPhoneBooksBody true "Phone books sms details."
 // @Success 200 {object} SendSMSResponse
 // @Failure 204 {object} ErrorResponse
