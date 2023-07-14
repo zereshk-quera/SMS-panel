@@ -1483,6 +1483,13 @@ const docTemplate = `{
                 "summary": "Send sms to phone books numbers",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Authorization Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Phone books sms details.",
                         "name": "body",
                         "in": "body",
