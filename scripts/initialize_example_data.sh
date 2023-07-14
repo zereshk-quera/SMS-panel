@@ -1,1 +1,1 @@
-PGPASSWORD="password" psql -h localhost -p 5432 -d test -U root -a -f ./database/data.sql
+PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -d "${POSTGRES_DB}" -U "${POSTGRES_USER}" -a -f ./database/data.sql
