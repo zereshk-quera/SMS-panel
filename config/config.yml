@@ -4,3 +4,6 @@ app:
 
 http:
   port: "8082"
+
+adminregister:
+  admin_code: "1234"

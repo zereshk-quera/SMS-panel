@@ -22,8 +22,9 @@ import (
 func TestAdminRegisterHandler(t *testing.T) {
 	e := echo.New()
 
+	admin_code, err := utils.GetAdminCode()
+	assert.NoError(t, err)
 	t.Run("ValidRequest", func(t *testing.T) {
-		adminPassword := os.Getenv("ADMIN_PASSWORD")
 		requestBody := map[string]interface{}{
 			"firstname":  "John",
 			"lastname":   "Doe",
@@ -31,7 +32,8 @@ func TestAdminRegisterHandler(t *testing.T) {
 			"phone":      "09376304339",
 			"nationalid": "0817762590",
 			"username":   "johndoe",
-			"password":   adminPassword,
+			"password":   "password",
+			"code":       admin_code,
 		}
 		jsonData, err := json.Marshal(requestBody)
 		assert.NoError(t, err)

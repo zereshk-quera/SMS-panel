@@ -1,31 +1,32 @@
 package config
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type (
-	// Config -.
+	// Config represents the application configuration.
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		PG
+		App           App           `yaml:"app"`
+		HTTP          HTTP          `yaml:"http"`
+		PG            PG            `yaml:"pg"`
+		AdminRegister AdminRegister `yaml:"adminregister"`
 	}
 
+	// App represents the application-specific configuration.
 	App struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
+		Name    string `yaml:"name" env:"APP_NAME" env-required:"true"`
+		Version string `yaml:"version" env:"APP_VERSION" env-required:"true"`
 	}
 
-	// HTTP -.
+	// HTTP represents the HTTP server configuration.
 	HTTP struct {
-		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		Port string `yaml:"port" env:"HTTP_PORT" env-required:"true"`
 	}
 
-	// PG -.
+	// PG represents the PostgreSQL configuration.
 	PG struct {
 		HOST     string `env:"POSTGRES_HOST"`
 		PORT     string `env:"POSTGRES_PORT"`
@@ -35,31 +36,27 @@ type (
 		SSLMODE  string `env:"POSTGRES_SSLMODE"`
 		TIMEZONE string `env:"POSTGRES_TIMEZONE"`
 	}
+
+	// AdminRegister represents the configuration for the admin registration.
+	AdminRegister struct {
+		ADMIN_CODE string `yaml:"admin_code" env:"ADMIN_CODE"`
+	}
 )
 
-// NewConfig returns app config.
+// NewConfig returns the application configuration based on the provided configuration files and environment variables.
 func NewConfig() (*Config, error) {
-	cfg, err := ParseConfigFiles("./config/config.yml", "./.env")
-	if err != nil {
-		return nil, fmt.Errorf("config error: %w", err)
-	}
-	err = cleanenv.ReadEnv(cfg)
-	if err != nil {
+	var cfg Config
+
+	// Read the configuration from the YAML file
+	if err := cleanenv.ReadConfig("config.yaml", &cfg); err != nil {
+		log.Printf("Error reading configuration: %v", err)
 		return nil, err
 	}
 
-	return cfg, nil
-}
-
-func ParseConfigFiles(files ...string) (*Config, error) {
-	var cfg Config
-
-	for i := 0; i < len(files); i++ {
-		err := cleanenv.ReadConfig(files[i], &cfg)
-		if err != nil {
-			log.Printf("Error reading configuration from file:%v", files[i])
-			return nil, err
-		}
+	// Read the environment variables
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		log.Printf("Error reading environment variables: %v", err)
+		return nil, err
 	}
 
 	return &cfg, nil

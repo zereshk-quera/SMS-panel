@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -57,14 +56,19 @@ func AdminRegisterHandler(c echo.Context, db *gorm.DB) error {
 	}
 
 	// check json format
-	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "firstname", "lastname", "email", "phone", "nationalid", "username", "password")
+	jsonFormatValidationMsg, jsonFormatErr := utils.ValidateJsonFormat(jsonBody, "firstname", "lastname", "email", "phone", "nationalid", "username", "password", "code")
 	if jsonFormatErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: jsonFormatValidationMsg})
 	}
 
-	// check password correction
-	if jsonBody["password"].(string) != (os.Getenv("ADMIN_PASSWORD")) {
-		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Password Isn't Correct"})
+	// check code correction
+	adminCode, err := utils.GetAdminCode()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, models.Response{ResponseCode: 500, Message: "Failed to get admin code"})
+	}
+
+	if jsonBody["code"].(string) != adminCode {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: "Input Code Isn't Correct"})
 	}
 
 	// check user validation
@@ -78,6 +82,7 @@ func AdminRegisterHandler(c echo.Context, db *gorm.DB) error {
 	if userUniqueErr != nil {
 		return c.JSON(http.StatusUnprocessableEntity, models.Response{ResponseCode: 422, Message: userUniqueMsg})
 	}
+
 	// Insert User Object Into Database
 	createdUser := db.Create(&user)
 	if createdUser.Error != nil {

@@ -6,12 +6,22 @@ import (
 	"strings"
 	"time"
 
+	"SMS-panel/config"
 	"SMS-panel/models"
 
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
+
+func GetAdminCode() (string, error) {
+	conf, err := config.NewConfig()
+	if err != nil {
+		return "", err
+	}
+	adminCode := conf.AdminRegister.ADMIN_CODE
+	return adminCode, nil
+}
 
 // this function used to check user properties validation
 func ValidateUser(jsonBody map[string]interface{}) (string, models.User, error) {
