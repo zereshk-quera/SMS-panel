@@ -143,7 +143,7 @@ func TestCreatePhoneBookNumber(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "phone book is required", response["error"])
+		assert.Equal(t, "Phone book is required", response["error"])
 	})
 
 	t.Run("CreatePhoneBookNumberMissingPhone", func(t *testing.T) {
@@ -233,7 +233,7 @@ func TestCreatePhoneBookNumber(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "Inupt Phone Number has already been registered", response["error"])
+		assert.Equal(t, "Input Phone Number has already been registered", response["error"])
 	})
 
 	t.Run("CreatePhoneBookNumberDuplicateUsername", func(t *testing.T) {
@@ -263,7 +263,7 @@ func TestCreatePhoneBookNumber(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
-		assert.Equal(t, "Inupt Username has already been registered", response["error"])
+		assert.Equal(t, "Input Username has already been registered", response["error"])
 	})
 }
 
@@ -272,8 +272,30 @@ func TestListPhoneBookNumbers(t *testing.T) {
 		db, err := utils.CreateTestDatabase()
 		defer utils.CloseTestDatabase(db)
 		assert.NoError(t, err)
+		user := models.User{
+			FirstName:  "john",
+			LastName:   "doe",
+			Phone:      "09376304339",
+			Email:      "test@gmail.com",
+			NationalID: "123456789",
+		}
+		err = db.Create(&user).Error
+		assert.NoError(t, err)
 
-		phoneBook := models.PhoneBook{Name: "Test Phone Book"}
+		account := models.Account{
+			UserID:   user.ID,
+			Username: "testuser",
+			Budget:   0,
+			Password: "password",
+			IsActive: true,
+			IsAdmin:  false,
+		}
+		err = db.Create(&account).Error
+		assert.NoError(t, err)
+		phoneBook := models.PhoneBook{
+			AccountID: account.ID,
+			Name:      "Phone Book 1",
+		}
 		err = db.Create(&phoneBook).Error
 		assert.NoError(t, err)
 
@@ -305,7 +327,7 @@ func TestListPhoneBookNumbers(t *testing.T) {
 		ctx := e.NewContext(req, rec)
 		ctx.SetParamNames("phoneBookID")
 		ctx.SetParamValues(fmt.Sprint(phoneBook.ID))
-
+		ctx.Set("account", account)
 		handler := handlers.NewPhonebookHandler(db)
 		err = handler.ListPhoneBookNumbers(ctx)
 		assert.NoError(t, err)
@@ -323,6 +345,26 @@ func TestListPhoneBookNumbers(t *testing.T) {
 		db, err := utils.CreateTestDatabase()
 		defer utils.CloseTestDatabase(db)
 		assert.NoError(t, err)
+		user := models.User{
+			FirstName:  "john",
+			LastName:   "doe",
+			Phone:      "09376304339",
+			Email:      "test@gmail.com",
+			NationalID: "123456789",
+		}
+		err = db.Create(&user).Error
+		assert.NoError(t, err)
+
+		account := models.Account{
+			UserID:   user.ID,
+			Username: "testuser",
+			Budget:   0,
+			Password: "password",
+			IsActive: true,
+			IsAdmin:  false,
+		}
+		err = db.Create(&account).Error
+		assert.NoError(t, err)
 
 		e := echo.New()
 
@@ -331,6 +373,7 @@ func TestListPhoneBookNumbers(t *testing.T) {
 		ctx := e.NewContext(req, rec)
 		ctx.SetParamNames("phoneBookID")
 		ctx.SetParamValues(fmt.Sprint(9999))
+		ctx.Set("account", account)
 
 		handler := handlers.NewPhonebookHandler(db)
 		err = handler.ListPhoneBookNumbers(ctx)

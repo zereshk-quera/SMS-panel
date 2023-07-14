@@ -11,8 +11,7 @@ import (
 )
 
 type PhoneBookRequest struct {
-	AccountID uint   `json:"accountID" binding:"required"`
-	Name      string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required"`
 }
 
 type PhoneBookResponse struct {
@@ -38,6 +37,7 @@ func NewPhonebookHandler(db *gorm.DB) *PhonebookHandler {
 // @Tags phonebook
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Authorization Token"
 // @Param phoneBook body PhoneBookRequest true "Phone book entry data"
 // @Success 201 {object} PhoneBookResponse
 // @Failure 400 {object} ErrorResponse
@@ -55,9 +55,7 @@ func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Name is required"})
 	}
 
-	if phoneBook.AccountID != account.ID {
-		return c.JSON(http.StatusForbidden, map[string]string{"error": "Permision Denied"})
-	}
+	phoneBook.AccountID = account.ID
 
 	if err := p.db.Create(&phoneBook).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create phone book"})
@@ -71,6 +69,7 @@ func (p *PhonebookHandler) CreatePhoneBook(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Authorization Token"
 // @Success 200 {array} PhoneBookResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /account/phone-books/ [get]
@@ -93,6 +92,7 @@ func (p *PhonebookHandler) GetAllPhoneBooks(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param phoneBookID path int true "Phone Book ID"
+// @Param Authorization header string true "Authorization Token"
 // @Success 200 {object} PhoneBookResponse
 // @Failure 404 {string} string
 // @Failure 500 {object} ErrorResponse
@@ -119,6 +119,7 @@ func (p *PhonebookHandler) ReadPhoneBook(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Authorization Token"
 // @Param phoneBookID path int true "Phone Book ID"
 // @Param phoneBook body PhoneBookRequest true "Phone Book object"
 // @Success 200 {object} PhoneBookResponse
@@ -158,6 +159,7 @@ func (p *PhonebookHandler) UpdatePhoneBook(c echo.Context) error {
 // @Tags phonebook
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Authorization Token"
 // @Param phoneBookID path int true "Phone Book ID"
 // @Success 200 {string} string
 // @Failure 404 {string} string

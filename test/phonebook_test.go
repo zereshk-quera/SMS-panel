@@ -52,8 +52,7 @@ func TestCreatePhoneBook(t *testing.T) {
 
 	t.Run("CreatePhoneBookSuccess", func(t *testing.T) {
 		requestBody := handlers.PhoneBookRequest{
-			AccountID: account.ID,
-			Name:      "Test Phone Book",
+			Name: "Test Phone Book",
 		}
 
 		jsonBody, _ := json.Marshal(requestBody)
@@ -75,13 +74,12 @@ func TestCreatePhoneBook(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Assert the response
-		assert.Equal(t, requestBody.AccountID, response.AccountID)
+		assert.Equal(t, account.ID, response.AccountID)
 		assert.Equal(t, requestBody.Name, response.Name)
 	})
 	t.Run("CreatePhoneBookNameMissing", func(t *testing.T) {
 		requestBody := handlers.PhoneBookRequest{
-			AccountID: account.ID,
-			Name:      "",
+			Name: "",
 		}
 
 		jsonBody, _ := json.Marshal(requestBody)

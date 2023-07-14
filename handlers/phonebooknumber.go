@@ -17,6 +17,13 @@ type UpdatePhoneBookNumberRequest struct {
 	Name   string `json:"name"`
 	Phone  string `json:"phone"`
 }
+type CreatePhoneBookNumberRequest struct {
+	Name        string `json:"name"`
+	Phone       string `json:"phone"`
+	PhoneBookID uint   `json:"phoneBookID"`
+	Prefix      string `json:"prefix"`
+	Username    string `json:"username"`
+}
 
 // CreatePhoneBookNumber creates a new phone book number
 // @Summary Create a new phone book number
@@ -24,7 +31,8 @@ type UpdatePhoneBookNumberRequest struct {
 // @Tags PhoneBookNumbers
 // @Accept json
 // @Produce json
-// @Param phoneBookNumber body models.PhoneBookNumber true "Phone book number object"
+// @Param Authorization header string true "Authorization Token"
+// @Param phoneBookNumber body CreatePhoneBookNumberRequest true "Phone book number object"
 // @Success 201 {object} models.PhoneBookNumber
 // @Failure 400 {string} string
 // @Failure 500 {string} string
@@ -32,11 +40,11 @@ type UpdatePhoneBookNumberRequest struct {
 func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 	phoneBookNumber := models.PhoneBookNumber{}
 	account := c.Get("account").(models.Account)
-	phoneBookNumber.PhoneBook.AccountID = account.ID
 
 	if err := c.Bind(&phoneBookNumber); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
+
 	if phoneBookNumber.Name == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Name is required"})
 	}
@@ -44,9 +52,21 @@ func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 	if phoneBookNumber.Phone == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Phone is required"})
 	}
+
 	if phoneBookNumber.PhoneBookID == 0 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "phone book is required"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Phone book is required"})
 	}
+
+	// Retrieve the existing PhoneBook with the given PhoneBookID
+	phoneBook := models.PhoneBook{}
+	result := p.db.First(&phoneBook, phoneBookNumber.PhoneBookID)
+	if result.Error != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Phone book not found"})
+	}
+
+	// Set the AccountID and assign the existing PhoneBook to PhoneBookNumber
+	phoneBookNumber.PhoneBook = phoneBook
+	phoneBookNumber.PhoneBook.AccountID = account.ID
 
 	// Check Phone Number Validation
 	if !utils.ValidatePhone(phoneBookNumber.Phone) {
@@ -57,15 +77,15 @@ func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 	var existingPhoneBookNumber models.PhoneBookNumber
 	p.db.Where("phone = ? AND prefix = ?", phoneBookNumber.Phone, phoneBookNumber.Prefix).First(&existingPhoneBookNumber)
 	if existingPhoneBookNumber.ID != 0 {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Inupt Phone Number has already been registered"})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Input Phone Number has already been registered"})
 	}
 
 	p.db.Where("username = ?", phoneBookNumber.Username).First(&existingPhoneBookNumber)
 	if existingPhoneBookNumber.ID != 0 {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Inupt Username has already been registered"})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Input Username has already been registered"})
 	}
 
-	result := p.db.Create(&phoneBookNumber)
+	result = p.db.Create(&phoneBookNumber)
 	if result.Error != nil {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
@@ -80,6 +100,7 @@ func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param phoneBookID path string true "Phone book ID"
+// @Param Authorization header string true "Authorization Token"
 // @Success 200 {array} models.PhoneBookNumber
 // @Failure 404 {string} string
 // @Failure 500 {string} string
@@ -87,8 +108,13 @@ func (p *PhonebookHandler) CreatePhoneBookNumber(c echo.Context) error {
 func (p *PhonebookHandler) ListPhoneBookNumbers(c echo.Context) error {
 	phoneBookID := c.Param("phoneBookID")
 
-	var phoneBookNumbers []models.PhoneBookNumber
-	result := p.db.Where("phone_book_id = ?", phoneBookID).Find(&phoneBookNumbers)
+	account := c.Get("account").(models.Account)
+
+	var phoneBookNumber []models.PhoneBookNumber
+	result := p.db.
+		Joins("JOIN phone_books ON phone_books.id = phone_book_numbers.phone_book_id AND phone_books.account_id = ?", account.ID).
+		Where("phone_book_id = ?", phoneBookID).
+		Find(&phoneBookNumber)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return c.JSON(http.StatusNotFound, "Phonebook not found")
@@ -96,7 +122,7 @@ func (p *PhonebookHandler) ListPhoneBookNumbers(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, result.Error.Error())
 	}
 
-	return c.JSON(http.StatusOK, phoneBookNumbers)
+	return c.JSON(http.StatusOK, phoneBookNumber)
 }
 
 // ReadPhoneBookNumber retrieves the data of a phone book number based on its ID

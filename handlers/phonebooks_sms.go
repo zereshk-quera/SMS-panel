@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"SMS-panel/models"
 	"log"
 	"net/http"
+
+	"SMS-panel/models"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -26,7 +27,7 @@ func NewSmsPhoneBookHandler(db *gorm.DB) *SmsPhoneBookHandler {
 
 // @Summary Send sms to phone books numbers
 // @Description Send sms to phone books numbers
-// @Tags SMS
+// @Tags messages
 // @Accept json
 // @Produce json
 // @Param body body SendSMessageToPhoneBooksBody true "Phone books sms details."

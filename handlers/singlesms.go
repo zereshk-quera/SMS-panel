@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -42,7 +43,7 @@ type ErrorResponseSingle struct {
 // @Failure 403 {object} ErrorResponseSingle
 // @Failure 404 {object} ErrorResponseSingle
 // @Failure 500 {object} ErrorResponseSingle
-// @Router /sms/single-sms [post]
+// @Router /sms/single [post]
 func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 	account := c.Get("account").(models.Account)
 	ctx := c.Request().Context()
@@ -147,14 +148,6 @@ func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 		Source:      account.Username,
 		Destination: destination,
 	})
-	if err != nil {
-		tx.Rollback()
-		errResponse := ErrorResponseSingle{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to send SMS",
-		}
-		return c.JSON(http.StatusInternalServerError, errResponse)
-	}
 
 	sms := models.SMSMessage{
 		Sender:         reqBody.SenderNumber,
@@ -165,7 +158,11 @@ func SendSingleSMSHandler(c echo.Context, db *gorm.DB) error {
 		CreatedAt:      time.Now(),
 		AccountID:      account.ID,
 	}
-
+	if err != nil {
+		tx.Rollback()
+		sms.DeliveryReport = deliveryReport
+		log.Println("SMS have badword")
+	}
 	if err := tx.Create(&sms).Error; err != nil {
 		tx.Rollback()
 		errResponse := ErrorResponseSingle{
