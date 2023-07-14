@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"regexp"
 	"strings"
 	"time"
@@ -213,24 +212,6 @@ func CheckPhoneBooksExist(ctx context.Context, db *gorm.DB, phoneBooks []string)
 	}
 
 	return true, nil
-}
-
-func sendMessageApiWithError(message string, phoneNumber string) error {
-	n := rand.Intn(10)
-	if n%2 == 0 {
-		return errors.New("field to send message!")
-	} else {
-		return nil
-	}
-}
-
-func sendMessageApiWithSuccess(message string, phoneNumber string) error {
-	return nil
-}
-
-func sendMessageApi(message string, phoneNumber string) error {
-	// return sendMessageApiWithError(message, phoneNumber)
-	return sendMessageApiWithSuccess(message, phoneNumber)
 }
 
 func SendGroupMessage(
